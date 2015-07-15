@@ -1,0 +1,110 @@
+module.exports =
+  { compileSource: compileSource
+  , makeContext:   makeContext
+  , requireWisp:   requireWisp
+  , wrap:          wrap };
+
+var fs      = require('fs')
+  , logging = require('etude-logging')
+  , path    = require('path')
+  , resolve = require('resolve')
+  , vm      = require('vm');
+
+var wisp = module.exports.wisp =
+  { ast:      require('wisp/ast.js')
+  , compiler: require('wisp/compiler.js')
+  , runtime:  require('wisp/runtime.js')
+  , sequence: require('wisp/sequence.js') };
+
+var log = logging.getLogger('runtime');
+
+function compileSource (source, filename, raw) {
+  raw = raw || false;
+  var forms     = wisp.compiler.readForms(source, filename)
+    , forms     = forms.forms;
+
+  var processed = wisp.compiler.analyzeForms(forms)
+  if (processed.error) throw new Error("Compile error: " + processed.error);
+
+  var options   = { 'source-uri': filename , 'source': source }
+    , output    = wisp.compiler.generate.bind(null, options).apply(null, processed.ast);
+
+  return { forms: forms, processed: processed, output: output }
+}
+
+function wrap (code, map) {
+  // TODO make source maps work
+  var sep = "//# sourceMappingURL=data:application/json;base64,";
+  var mapped = code.split(sep);
+  return (!map ? [] : [
+    'require("source-map-support").install({retrieveSourceMap:function(){',
+    'return{url:null,map:"', mapped[1].trim(), '"}}});'
+  ]).concat([
+    'error=null;try{', mapped[0],
+    '}catch(e){error=e}',
+  ]).join("");
+}
+
+function importIntoContext (context, obj) {
+  Object.keys(obj).map(function(k) { context[k] = obj[k] });
+}
+
+function makeContext (filename, elevated) {
+
+  function _require (module) {
+    module = resolve.sync(module,
+      { extensions: [".js", ".wisp"]
+      , basedir:    path.dirname(filename) });
+    if (!process.browser && path.extname(module) === '.wisp') {
+      return requireWisp(module)
+    } else {
+      return require(module)
+    }
+  };
+  _require.main = require.main;
+
+  var context =
+    { exports:      {}
+    , __dirname:    path.dirname(filename)
+    , __filename:   filename
+    , log:          logging.getLogger(path.basename(filename))
+    , use:          requireWisp
+    , process:      { cwd: process.cwd() }
+    , isInstanceOf: function (type, obj) { return obj instanceof type }
+    , require:      _require };
+
+  if (elevated) {
+    context.process = process;
+    context.require = require;
+  }
+
+  if (process.browser) {
+    ATOM_NAMES.map(function (atomName) {
+      if (context[atomName]) console.log(
+        "Warning: overriding existing key", atomName, "in context", name);
+      context[atomName] = global[atomName];
+    })
+  }
+
+  [ wisp.ast
+  , wisp.sequence
+  , wisp.runtime ].map(importIntoContext.bind(null, context));
+
+  return vm.createContext(context);
+}
+
+var cache = module.exports.cache = [];
+
+function requireWisp (name, raw, elevated) {
+  if (!cache[name]) {
+    raw = raw || false;
+    var filename = resolve.sync(name, { extensions: [".wisp"] })
+      , source   = fs.readFileSync(filename, { encoding: 'utf8' })
+      , output   = compileSource(source, filename, raw).output
+      , context  = makeContext(filename, elevated);
+    vm.runInContext(wrap(output.code), context, { filename: name });
+    if (context.error) throw context.error;
+    cache[name] = context.exports;
+  }
+  return cache[name];
+}

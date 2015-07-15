@@ -1,0 +1,54 @@
+#!/usr/bin/env node
+
+var fs      = require('fs')
+  , path    = require('path')
+  , runtime = require('../runtime.js')
+  , engine  = runtime.requireWisp('./engine.wisp');
+
+if (process.argv.length <= 2) {
+
+  console.log("Please specify either an entry file, a root directory, or both.");
+  process.exit();
+
+} else {
+
+  var entryFile = null
+    , rootDir;
+
+  if (process.argv.length === 3) {
+    entryFile = path.resolve(process.argv[2]);
+    if (!fs.existsSync(entryFile)) {
+      console.log("\"" + entryFile + "\"", "doesn't seem to exist.");
+      process.exit();
+    }
+    var stat = fs.statSync(entryFile);
+    if (stat.isFile()) {
+      rootDir = path.dirname(entryFile);
+      console.log("Assuming root directory:", rootDir);
+      console.log("Loading entry point:", entryFile);
+    } else if (stat.isDirectory()) {
+      console.log("Setting root directory", entryFile);
+      rootDir = entryFile;
+      entryFile = null;
+    } else {
+      console.log("\"" + entryFile + "\"",
+        "doesn't seem to be neither a file nor a directory.");
+      process.exit();
+    }
+  } else {
+    rootDir = path.resolve(process.argv[2]);
+    entryFile = path.resolve(process.argv[3]);
+    if (process.argv.length > 4) {
+      console.log("The following arguments have been ignored:",
+        process.argv.slice(4));
+    }
+  }
+
+  engine.start(rootDir).then(function () {
+    if (entryFile) {
+      engine.evaluateAtom(engine.ATOMS[path.relative(rootDir, entryFile)])
+        .then(function (result) { console.log("Started.", result) }).done();
+    }
+  }).done();
+
+}
