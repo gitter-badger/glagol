@@ -2,7 +2,6 @@
 (set! Q.longStackSupport true)
 
 (def ^:private colors    (require "colors/safe"))
-;(def ^:private chokidar (require "chokidar"))
 (def ^:private detective (require "detective"))
 (def ^:private fs        (require "fs"))
 (def ^:private glob      (require "glob"))
@@ -24,9 +23,17 @@
 
 (def log      (.get-logger (require "etude-logging") "engine"))
 (def events   (new (.-EventEmitter2 (require "eventemitter2")) { :maxListeners 32 }))
-;(def watcher  (chokidar.watch "" { :persistent true :alwaysStat true}))
 (def root-dir nil)
 (def ATOMS    {})
+
+;;
+;; server-side file watcher
+;;
+
+(def watcher { :add (fn []) :on (fn []) })
+(if (not process.browser)
+  (let [chokidar (require "chokidar")]
+    (set! watcher (chokidar.watch "" { :persistent true :alwaysStat true }))))
 
 ;;
 ;; project-level operations
@@ -57,7 +64,18 @@
             atom     (make-atom rel-path src)]
         (set! (aget ATOMS (translate rel-path)) atom)
         (events.emit "atom-updated" (freeze-atom atom))
+        (watcher.add atom-path)
         (resolve atom)))))))
+
+(defn reload-atom [atom-path file-stat]
+  (fs.read-file atom-path "utf-8" (fn [err src]
+    (if err (do (log err) (throw err)))
+    (let [rel-path  (path.relative root-dir atom-path)
+          atom-name (translate rel-path)
+          atom      (aget ATOMS atom-name)]
+      (if (not (= src (atom.source))) (atom.source.set src))))))
+(watcher.on "change" reload-atom)
+;(runtime.compile-source (atom.source) atom.name)
 
 (defn make-atom [atom-path source]
   (let [atom
