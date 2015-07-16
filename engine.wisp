@@ -80,7 +80,7 @@
 (defn make-atom [atom-path source]
   (let [atom
           { :type      "Atom"
-            :path      atom-path
+            :path      (path.resolve root-dir atom-path)
             :name      atom-path
             :source    (observ (.trim (or source "")))
             :compiled  nil
@@ -124,8 +124,7 @@
 
 (defn freeze-atom [atom]
   (let [frozen
-          { :path     atom.path
-            :name     atom.name
+          { :name     atom.name
             :source   (atom.source)
             :compiled atom.compiled.output.code
             :derefs   atom.derefs }]
