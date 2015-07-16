@@ -18,13 +18,16 @@
   (.-translate-identifier-word (require "wisp/backend/escodegen/writer.js")))
 
 ;;
-;; global singleton state
+;; global state
 ;;
 
-(def log      (.get-logger (require "etude-logging") "engine"))
-(def events   (new (.-EventEmitter2 (require "eventemitter2")) { :maxListeners 32 }))
 (def root-dir nil)
-(def ATOMS    {})
+(def ATOMS {})
+
+(def log (.get-logger (require "etude-logging") "engine"))
+(def events (new (.-EventEmitter2 (require "eventemitter2"))
+  { :maxListeners 32
+    :wildcard     true }))
 
 ;;
 ;; server-side file watcher
@@ -56,6 +59,9 @@
 ;; atom-level operations
 ;;
 
+(defn- updated [atom what]
+  (events.emit (str "atom.updated." what) (freeze-atom atom)))
+
 (defn load-atom [atom-path]
   (Q.Promise (fn [resolve reject]
     (fs.read-file atom-path "utf-8" (fn [err src]
@@ -63,7 +69,7 @@
       (let [rel-path (path.relative root-dir atom-path)
             atom     (make-atom rel-path src)]
         (set! (aget ATOMS (translate rel-path)) atom)
-        (events.emit "atom-updated" (freeze-atom atom))
+        (updated atom :value)
         (watcher.add atom-path)
         (resolve atom)))))))
 
@@ -88,21 +94,25 @@
             :derefs    []
             :value     (observ undefined)
             :evaluated false
-            :outdated  false } ]
+            :outdated  false }]
 
     ; compile source now and on update
     (compile-atom-sync atom)
     (atom.source (fn []
-      (compile-atom-sync atom)
-      (if atom.evaluated (do
-        (set! atom.outdated true)
-        (evaluate-atom-sync atom)))))
+      (updated atom :source)
+      (let [old-compiled (if atom.compiled atom.compiled.output.code nil)]
+        (compile-atom-sync atom)
+        (if (not (= old-compiled atom.compiled.output.code)) (do
+          (updated atom :compiled)
+          (if atom.evaluated (do
+            (set! atom.outdated true)
+            (evaluate-atom-sync atom))))))))
 
     ; emit event on value update
-    (atom.value (fn [] (events.emit "atom-updated" (freeze-atom atom))))
+    (atom.value (updated.bind nil atom :value))
 
     ; listen for value updates from dependencies
-    (events.on "atom-updated" (fn [frozen-atom]
+    (events.on "atom.updated.value" (fn [frozen-atom]
       (if (not (= -1 (.index-of atom.derefs frozen-atom.name)))
         (log "dependency of" atom.name "updated:" frozen-atom.name))))
 
@@ -170,6 +180,9 @@
         ; add browserify require to context
         (if process.browser
           (set! context.require require))
+        ; clean up previous instance
+        (let [old-value (atom.value)]
+          (if (and old-value old-value.destroy) (old-value.destroy)))
         ; evaluate atom code
         (let [value (vm.run-in-context (runtime.wrap code) context { :filename atom.name })]
           ; if a runtime error has arisen, throw it upwards
