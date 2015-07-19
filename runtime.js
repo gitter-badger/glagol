@@ -96,15 +96,15 @@ function makeContext (filename, elevated) {
 var cache = module.exports.cache = [];
 
 function requireWisp (name, raw, elevated) {
-  if (!cache[name]) {
-    raw = raw || false;
-    var filename = resolve.sync(name, { extensions: [".wisp"] })
-      , source   = fs.readFileSync(filename, { encoding: 'utf8' })
-      , output   = compileSource(source, filename, raw).output
+  var basedir  = path.dirname(require('resolve/lib/caller.js')())
+    , filename = resolve.sync(name, { extensions: [".wisp"], basedir: basedir })
+  if (!cache[filename]) {
+    var source   = fs.readFileSync(filename, { encoding: 'utf8' })
+      , output   = compileSource(source, filename, raw || false).output
       , context  = makeContext(filename, elevated);
     vm.runInContext(wrap(output.code), context, { filename: name });
     if (context.error) throw context.error;
-    cache[name] = context.exports;
+    cache[filename] = context.exports;
   }
-  return cache[name];
+  return cache[filename];
 }

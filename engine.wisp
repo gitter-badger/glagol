@@ -112,9 +112,9 @@
     (atom.value (updated.bind nil atom :value))
 
     ; listen for value updates from dependencies
-    (events.on "atom.updated.value" (fn [frozen-atom]
-      (if (not (= -1 (.index-of atom.derefs frozen-atom.name)))
-        (log "dependency of" atom.name "updated:" frozen-atom.name))))
+    ;(events.on "atom.updated.value" (fn [frozen-atom]
+      ;(if (not (= -1 (.index-of atom.derefs frozen-atom.name)))
+        ;(log "dependency of" atom.name "updated:" frozen-atom.name))))
 
     atom))
 
@@ -145,7 +145,7 @@
 (defn run-atom [name]
   (Q.Promise (fn [resolve reject]
     (if (= -1 (.index-of (Object.keys ATOMS) name))
-      (reject (str "No atom" name)))
+      (reject (str "No atom " name)))
     (resolve (evaluate-atom (aget ATOMS name))))))
 
 (defn evaluate-atom [atom]
@@ -212,7 +212,7 @@
           (set! add-dep (fn add-dep [atom-name]
             (if (= -1 (derefs.index-of atom-name))
               (let [dep (aget ATOMS atom-name)]
-                (if (not dep) (throw (Error. (str "no atom" atom-name))))
+                (if (not dep) (throw (Error. (str "No atom " atom-name))))
                 (derefs.push atom-name)
                 (find-requires dep)
                 (dep.derefs.map add-dep))))) ]

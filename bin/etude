@@ -3,7 +3,7 @@
 var fs      = require('fs')
   , path    = require('path')
   , runtime = require('../runtime.js')
-  , engine  = runtime.requireWisp('./engine.wisp');
+  , engine  = runtime.requireWisp('../engine.wisp');
 
 if (process.argv.length <= 2) {
 

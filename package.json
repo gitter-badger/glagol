@@ -2,7 +2,7 @@
   "name": "etude-engine",
   "version": "0.0.0",
   "description": "",
-  "main": "",
+  "main": "engine.wisp",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
