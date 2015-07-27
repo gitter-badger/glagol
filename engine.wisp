@@ -5,6 +5,7 @@
 (def ^:private detective (require "detective"))
 (def ^:private fs        (require "fs"))
 (def ^:private glob      (require "glob"))
+(def ^:private logging   (require "etude-logging"))
 (def ^:private observ    (require "observ"))
 (def ^:private path      (require "path"))
 (def ^:private resolve   (require "resolve"))
@@ -24,7 +25,7 @@
 (def root-dir nil)
 (def ATOMS {})
 
-(def log (.get-logger (require "etude-logging") "engine"))
+(def log (logging.get-logger "engine"))
 (def events (new (.-EventEmitter2 (require "eventemitter2"))
   { :maxListeners 32
     :wildcard     true }))
@@ -161,6 +162,8 @@
       (if (not atom.compiled) (compile-atom-sync atom))
       (let [code    atom.compiled.output.code
             context (runtime.make-context (path.resolve root-dir atom.name))]
+        ; nicer logger
+        (set! context.log (logging.get-logger (str (colors.bold "@") atom.name)))
         ; make loaded atoms available in context
         (.map (Object.keys ATOMS) (fn [i]
           (let [atom (aget ATOMS i)]

@@ -24,7 +24,9 @@ function compileSource (source, filename, raw) {
     , forms     = forms.forms;
 
   var processed = wisp.compiler.analyzeForms(forms)
-  if (processed.error) throw new Error("Compile error: " + processed.error);
+  if (processed.error) {
+    throw new Error("Compile error in " + filename + ": " + processed.error);
+  }
 
   var options   = { 'source-uri': filename , 'source': source }
     , output    = wisp.compiler.generate.bind(null, options).apply(null, processed.ast);
@@ -98,6 +100,17 @@ var cache = module.exports.cache = [];
 function requireWisp (name, raw, elevated) {
   var basedir  = path.dirname(require('resolve/lib/caller.js')())
     , filename = resolve.sync(name, { extensions: [".wisp"], basedir: basedir })
+
+  // HACK: require calls to different locations of engine.wisp returns
+  // different instances of the module -- which, however, is stateful;
+  // and the state is missing everywhere except the original location.
+  // currently, all instances of the `etude-engine` module are symlinks
+  // to the same location, so a call to realpath(2) will give us the
+  // correct cache key. however, the existence of this issue means that
+  // engine should either not be a stateful module or store its state
+  // globally or something.
+  filename = fs.realpathSync(filename);
+
   if (!cache[filename]) {
     var source   = fs.readFileSync(filename, { encoding: 'utf8' })
       , output   = compileSource(source, filename, raw || false).output
