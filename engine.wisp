@@ -188,11 +188,13 @@
           []
         dereferencer
           (fn dereferencer [atom]
-            (if (= -1 (deref-deps.index-of atom.name))
-              (deref-deps.push atom.name))
-            (if (and atom.evaluated (not atom.outdated))
-              (.value atom))
-              (.value (evaluate-atom-sync atom)))]
+            (if (string? atom) (dereferencer (aget ATOMS atom))
+              (do
+                (if (= -1 (deref-deps.index-of atom.name))
+                  (deref-deps.push atom.name))
+                (if (and atom.evaluated (not atom.outdated))
+                  (.value atom))
+                  (.value (evaluate-atom-sync atom)))))]
     (set! dereferencer.deps deref-deps)
     dereferencer))
 
