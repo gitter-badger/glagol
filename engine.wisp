@@ -180,6 +180,22 @@
     (try (resolve (evaluate-atom-sync atom))
       (catch e (reject e))))))
 
+(defn make-dereferencer
+  " Returns a new atom dereferencer that keeps track of what atoms
+    have actually been dereferenced at runtime. "
+  []
+  (let [deref-deps
+          []
+        dereferencer
+          (fn dereferencer [atom]
+            (if (= -1 (deref-deps.index-of atom.name))
+              (deref-deps.push atom.name))
+            (if (and atom.evaluated (not atom.outdated))
+              (.value atom))
+              (.value (evaluate-atom-sync atom)))]
+    (set! dereferencer.deps deref-deps)
+    dereferencer))
+
 (defn evaluate-atom-sync
   " Evaluates the atom in a newly created context. "
   [atom]
@@ -194,36 +210,22 @@
       (let [code    atom.compiled.output.code
             context (runtime.make-context (path.resolve root-dir atom.name))]
 
-        ; nicer logger
+        ; add a nicer logger
         (set! context.log (logging.get-logger (str (colors.bold "@") atom.name)))
 
-        ; make loaded atoms available in context
+        ; make loaded atoms available in context; add atom dereferencer
         (.map (Object.keys ATOMS) (fn [i]
           (let [atom (aget ATOMS i)]
             (set! (aget context (translate atom.name)) atom))))
-
-        ; add deref function and associated dependency tracking to context
-        (let [deref-deps
-                []
-              deref-atom
-                (fn deref-atom [atom]
-                  (if (= -1 (deref-deps.index-of atom.name))
-                    (deref-deps.push atom.name))
-                  (if (and atom.evaluated (not atom.outdated))
-                    (.value atom))
-                    (.value (evaluate-atom-sync atom)))]
-          (set! deref-atom.deps deref-deps)
-          (set! context.deref deref-atom))
+        (set! context.deref (make-dereferencer))
 
         ; add browserify require to context
-        (if process.browser
-          (set! context.require require))
+        (if process.browser (set! context.require require))
 
-        ; clean up previous instance
+        ; clean up previous instance if possible, and evaluate updated code
         (let [old-value (atom.value)]
           (if (and old-value old-value.destroy) (old-value.destroy)))
 
-        ; evaluate atom code
         (let [value (vm.run-in-context (runtime.wrap code) context { :filename atom.name })]
 
           ; if a runtime error has arisen, throw it upwards
