@@ -46,7 +46,7 @@ if (process.argv.length <= 2) {
 
   engine.start(rootDir).then(function () {
     if (entryFile) {
-      engine.evaluateAtom(engine.ATOMS[path.relative(rootDir, entryFile)])
+      engine.runAtom(engine.translate(path.relative(rootDir, entryFile)))
         .then(function (result) { console.log("Started.") }).done();
     }
   }).done();
