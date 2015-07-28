@@ -43,11 +43,16 @@
 ;; project-level operations
 ;;
 
-(defn start [dir]
+(defn start
+  " Starts up the engine in a specified root directory. "
+  [dir]
   (set! root-dir dir)
   (.then (list-atoms dir) (fn [atom-paths] (Q.allSettled (atom-paths.map load-atom)))))
 
-(defn list-atoms [dir]
+(defn list-atoms
+  " Promises a list of atoms in a specified directory.
+    TODO: Log in start rather than here "
+  [dir]
   (Q.Promise (fn [resolve reject]
     (glob (path.join dir "**" "*") {} (fn [err atoms]
       (set! atoms (atoms.filter (fn [a] (= -1 (a.index-of "node_modules")))))
@@ -60,10 +65,15 @@
 ;; atom-level operations
 ;;
 
-(defn- updated [atom what]
+(defn- updated
+  " Emits when an aspect of an atom (source code, compiled code, value)
+    has been updated. "
+  [atom what]
   (events.emit (str "atom.updated." what) (freeze-atom atom)))
 
-(defn load-atom [atom-path]
+(defn load-atom
+  " Loads an atom from the specified path, and adds it to the watcher. "
+  [atom-path]
   (Q.Promise (fn [resolve reject]
     (fs.read-file atom-path "utf-8" (fn [err src]
       (if err (do (log err) (reject err)))
@@ -74,17 +84,23 @@
         (watcher.add atom-path)
         (resolve atom)))))))
 
-(defn reload-atom [atom-path file-stat]
+(defn reload-atom
+  " Reloads an atom's source code from a file.
+    TODO: pass atom instead of path? "
+  [atom-path file-stat]
   (fs.read-file atom-path "utf-8" (fn [err src]
     (if err (do (log err) (throw err)))
     (let [rel-path  (path.relative root-dir atom-path)
           atom-name (translate rel-path)
           atom      (aget ATOMS atom-name)]
       (if (not (= src (atom.source))) (atom.source.set src))))))
+
 (watcher.on "change" reload-atom)
 ;(runtime.compile-source (atom.source) atom.name)
 
-(defn make-atom [atom-path source]
+(defn make-atom
+  " Creates a new atom, optionally with a preloaded source. "
+  [atom-path source]
   (let [atom
           { :type      "Atom"
             :path      (path.resolve root-dir atom-path)
@@ -119,21 +135,27 @@
 
     atom))
 
-(defn compile-atom-sync [atom]
+(defn compile-atom-sync
+  " Compiles an atom's source code and determines its dependencies. "
+  [atom]
   (set! atom.compiled (runtime.compile-source (atom.source) atom.name))
   (let [code atom.compiled.output.code]
     (set! atom.requires (unique (.-strings     (detective.find code))))
     (set! atom.derefs   (unique (.-expressions (detective.find code { :word "deref" })))))
   atom)
 
-(defn freeze-atoms []
+(defn freeze-atoms
+  " Returns a static snapshot of all loaded atoms. "
+  []
   (let [snapshot {}]
     (.map (Object.keys ATOMS) (fn [i]
       (let [frozen (freeze-atom (aget ATOMS i))]
         (set! (aget snapshot i) frozen))))
     snapshot))
 
-(defn freeze-atom [atom]
+(defn freeze-atom
+  " Returns a static snapshot of a single atom. "
+  [atom]
   (let [frozen
           { :name     atom.name
             :source   (atom.source)
@@ -143,31 +165,43 @@
     (set! frozen.timestamp (Math.floor (Date.now)))
     frozen))
 
-(defn run-atom [name]
+(defn run-atom
+  " Promises to evaluate an atom, if it exists. "
+  [name]
   (Q.Promise (fn [resolve reject]
     (if (= -1 (.index-of (Object.keys ATOMS) name))
       (reject (str "No atom " name)))
     (resolve (evaluate-atom (aget ATOMS name))))))
 
-(defn evaluate-atom [atom]
+(defn evaluate-atom
+  " Promises to evaluate an atom. "
+  [atom]
   (Q.Promise (fn [resolve reject]
     (try (resolve (evaluate-atom-sync atom))
       (catch e (reject e))))))
 
-(defn evaluate-atom-sync [atom]
-  ; compile atom code if not compiled yet
+(defn evaluate-atom-sync
+  " Evaluates the atom in a newly created context. "
+  [atom]
+
+  ; if the atom's value is up to date, there's nothing to do
   (if (and atom.evaluated (not atom.outdated))
     atom
     (do
+
+      ; compile atom code if not compiled yet
       (if (not atom.compiled) (compile-atom-sync atom))
       (let [code    atom.compiled.output.code
             context (runtime.make-context (path.resolve root-dir atom.name))]
+
         ; nicer logger
         (set! context.log (logging.get-logger (str (colors.bold "@") atom.name)))
+
         ; make loaded atoms available in context
         (.map (Object.keys ATOMS) (fn [i]
           (let [atom (aget ATOMS i)]
             (set! (aget context (translate atom.name)) atom))))
+
         ; add deref function and associated dependency tracking to context
         (let [deref-deps
                 []
@@ -180,24 +214,31 @@
                     (.value (evaluate-atom-sync atom)))]
           (set! deref-atom.deps deref-deps)
           (set! context.deref deref-atom))
+
         ; add browserify require to context
         (if process.browser
           (set! context.require require))
+
         ; clean up previous instance
         (let [old-value (atom.value)]
           (if (and old-value old-value.destroy) (old-value.destroy)))
+
         ; evaluate atom code
         (let [value (vm.run-in-context (runtime.wrap code) context { :filename atom.name })]
+
           ; if a runtime error has arisen, throw it upwards
           (if context.error
             (throw context.error)
+
             ; otherwise store the updated value and return the atom
             (do
               (set! atom.evaluated true)
               (atom.value.set value)
               atom)))))))
 
-(defn get-deps [atom]
+(defn get-deps
+  " Returns a processed list of the dependencies of an atom; used by etude-web "
+  [atom]
   (let [derefs
           []
         requires
@@ -225,6 +266,7 @@
       :requires requires }))
 
 (defn- unique
+  " Filters an array into a set of unique elements. "
   [arr]
   (let [encountered []]
     (arr.filter (fn [item]
