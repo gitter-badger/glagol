@@ -154,6 +154,23 @@
     (try (resolve (evaluate-atom-sync atom))
       (catch e (reject e))))))
 
+(defn get-getter [filename]
+  (log :get-getter filename)
+  (fn []))
+
+(defn get-handle [directory]
+  (let [sibling-files (glob.sync (path.join directory "*") { :nodir true })
+        sibling-dirs  (glob.sync (path.join directory "*/"))
+        sibling-map   {}]
+    (sibling-files.map (fn [f]
+      (Object.define-property sibling-map (path.basename f)
+        { :configurable false
+          :enumerable   true
+          :get          (get-getter f) })))
+    ;(sibling-dirs.map (fn [d]
+      ;(set! (aget sibling-map (path.basename d)) (get-handle d))))
+    sibling-map))
+
 (defn evaluate-atom-sync [atom]
   ; compile atom code if not compiled yet
   (if (and atom.evaluated (not atom.outdated))
@@ -164,6 +181,9 @@
             context (runtime.make-context (path.resolve root-dir atom.name))]
         ; nicer logger
         (set! context.log (logging.get-logger (str (colors.bold "@") atom.name)))
+        ; mirror filesystem tree
+        (set! context._  (get-handle (path.dirname atom.path)))
+        ;(set! context.__ (get-handle (path.dirname (path.dirname atom.path))))
         ; make loaded atoms available in context
         (.map (Object.keys ATOMS) (fn [i]
           (let [atom (aget ATOMS i)]
