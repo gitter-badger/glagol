@@ -16,6 +16,16 @@ var wisp = module.exports.wisp =
   , runtime:  require('wisp/runtime.js')
   , sequence: require('wisp/sequence.js') };
 
+// patch translate-identifier-word to translate
+// slashes into nested namespace references
+//var _writer = require('wisp/backend/escodegen/writer.js');
+//var _translate = _writer.translateIdentifierWord;
+//_writer.translateIdentifierWord = function () {
+  //var id = _translate.apply(null, arguments);
+  //log(arguments[0], '=>', id);
+  //return id.split('/').join('._.');
+//}
+
 var log = logging.getLogger('runtime');
 
 function compileSource (source, filename, raw) {
