@@ -274,7 +274,7 @@
     { :derefs   derefs
       :requires requires }))
 
-(defn- unique
+(defn unique
   " Filters an array into a set of unique elements. "
   [arr]
   (let [encountered []]
