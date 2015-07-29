@@ -48,19 +48,18 @@
   [dir]
   (set! root-dir dir)
   (.then (list-atoms dir) (fn [atom-paths]
+    (let [names (.join (atom-paths.map (path.relative.bind nil dir)) " ")]
+      (log "loading atoms" (colors.bold names) "from" (colors.green dir)))
     (Q.allSettled (atom-paths.map load-atom)))))
 
 (defn list-atoms
-  " Promises a list of atoms in a specified directory.
-    TODO: Log in start rather than here "
+  " Promises a list of atoms in a specified directory. "
   [dir]
   (Q.Promise (fn [resolve reject]
     (glob (path.join dir "**" "*") {} (fn [err atoms]
       (set! atoms (atoms.filter (fn [a] (= -1 (a.index-of "node_modules")))))
       (if err (do (log err) (reject err)))
-      (let [names (.join (atoms.map (path.relative.bind nil dir)) " ")]
-        (log "loading atoms" (colors.bold names) "from" (colors.green dir))
-        (resolve atoms)))))))
+      (resolve atoms))))))
 
 ;;
 ;; atom-level operations
