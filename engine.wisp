@@ -47,7 +47,8 @@
   " Starts up the engine in a specified root directory. "
   [dir]
   (set! root-dir dir)
-  (.then (list-atoms dir) (fn [atom-paths] (Q.allSettled (atom-paths.map load-atom)))))
+  (.then (list-atoms dir) (fn [atom-paths]
+    (Q.allSettled (atom-paths.map load-atom)))))
 
 (defn list-atoms
   " Promises a list of atoms in a specified directory.
@@ -140,8 +141,10 @@
   [atom]
   (set! atom.compiled (runtime.compile-source (atom.source) atom.name))
   (let [code atom.compiled.output.code]
-    (set! atom.requires (unique (.-strings     (detective.find code))))
-    (set! atom.derefs   (unique (.-expressions (detective.find code { :word "deref" })))))
+    (set! atom.requires
+      (unique (.-strings     (detective.find code))))
+    (set! atom.derefs
+      (unique (.-expressions (detective.find code { :word "deref" })))))
   atom)
 
 (defn freeze-atoms
@@ -213,7 +216,8 @@
             context (runtime.make-context (path.resolve root-dir atom.name))]
 
         ; add a nicer logger
-        (set! context.log (logging.get-logger (str (colors.bold "@") atom.name)))
+        (set! context.log
+          (logging.get-logger (str (colors.bold "@") atom.name)))
 
         ; make loaded atoms available in context; add atom dereferencer
         (.map (Object.keys ATOMS) (fn [i]
@@ -228,7 +232,8 @@
         (let [old-value (atom.value)]
           (if (and old-value old-value.destroy) (old-value.destroy)))
 
-        (let [value (vm.run-in-context (runtime.wrap code) context { :filename atom.name })]
+        (let [value (vm.run-in-context (runtime.wrap code) context
+                      { :filename atom.name })]
 
           ; if a runtime error has arisen, throw it upwards
           (if context.error

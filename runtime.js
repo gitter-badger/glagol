@@ -28,8 +28,9 @@ function compileSource (source, filename, raw) {
     throw new Error("Compile error in " + filename + ": " + processed.error);
   }
 
-  var options   = { 'source-uri': filename , 'source': source }
-    , output    = wisp.compiler.generate.bind(null, options).apply(null, processed.ast);
+  var options = { 'source-uri': filename , 'source': source }
+    , output  = wisp.compiler.generate.bind(null, options)
+                  .apply(null, processed.ast);
 
   return { forms: forms, processed: processed, output: output }
 }
