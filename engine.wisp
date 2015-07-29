@@ -160,6 +160,7 @@
   [atom]
   (let [frozen
           { :name     atom.name
+            :path     (path.relative root-dir atom.path)
             :source   (atom.source)
             :compiled atom.compiled.output.code
             :derefs   atom.derefs }]
