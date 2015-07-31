@@ -151,7 +151,7 @@
   " Returns a static snapshot of all loaded atoms. "
   []
   (let [snapshot {}]
-    (.map (Object.keys ATOMS) (fn [i]
+    (.map (keys ATOMS) (fn [i]
       (let [frozen (freeze-atom (aget ATOMS i))]
         (set! (aget snapshot i) frozen))))
     snapshot))
@@ -173,7 +173,7 @@
   " Promises to evaluate an atom, if it exists. "
   [name]
   (Q.Promise (fn [resolve reject]
-    (if (= -1 (.index-of (Object.keys ATOMS) name))
+    (if (= -1 (.index-of (keys ATOMS) name))
       (reject (str "No atom " name)))
     (resolve (evaluate-atom (aget ATOMS name))))))
 
@@ -221,7 +221,7 @@
           (logging.get-logger (str (colors.bold "@") atom.name)))
 
         ; make loaded atoms available in context; add atom dereferencer
-        (.map (Object.keys ATOMS) (fn [i]
+        (.map (keys ATOMS) (fn [i]
           (let [atom (aget ATOMS i)]
             (set! (aget context (translate atom.name)) atom))))
         (set! context.deref (make-dereferencer))
