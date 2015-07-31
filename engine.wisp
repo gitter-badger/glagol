@@ -23,6 +23,7 @@
 ;;
 
 (def root-dir nil)
+(defn get-root-dir [] root-dir)
 (def ATOMS {})
 
 (def log (logging.get-logger "engine"))
