@@ -18,13 +18,14 @@ var wisp = module.exports.wisp =
 
 // patch translate-identifier-word to translate
 // slashes into nested namespace references
-//var _writer = require('wisp/backend/escodegen/writer.js');
-//var _translate = _writer.translateIdentifierWord;
-//_writer.translateIdentifierWord = function () {
-  //var id = _translate.apply(null, arguments);
+var _writer = require('wisp/backend/escodegen/writer.js');
+var _translate = _writer.translateIdentifierWord;
+_writer.translateIdentifierWord = function () {
+  var id = _translate.apply(null, arguments);
   //log(arguments[0], '=>', id);
+  return id;
   //return id.split('/').join('._.');
-//}
+}
 
 var log = logging.getLogger('runtime');
 
