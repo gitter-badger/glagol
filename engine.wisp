@@ -109,7 +109,6 @@
             :source    (observ (.trim (or source "")))
             :compiled  nil
             :requires  []
-            :derefs    []
             :value     (observ undefined)
             :evaluated false
             :outdated  false }]
@@ -129,45 +128,15 @@
     ; emit event on value update
     (atom.value (updated.bind nil atom :value))
 
-    ; listen for value updates from dependencies
-    ;(events.on "atom.updated.value" (fn [frozen-atom]
-      ;(if (not (= -1 (.index-of atom.derefs frozen-atom.name)))
-        ;(log "dependency of" atom.name "updated:" frozen-atom.name))))
-
     atom))
 
 (defn compile-atom-sync
   " Compiles an atom's source code and determines its dependencies. "
   [atom]
   (set! atom.compiled (runtime.compile-source (atom.source) atom.name))
-  (let [code atom.compiled.output.code]
-    (set! atom.requires
-      (unique (.-strings     (detective.find code))))
-    (set! atom.derefs
-      (unique (.-expressions (detective.find code { :word "deref" })))))
+  (set! atom.requires (unique (.-strings
+    (detective.find atom.compiled.output.code))))
   atom)
-
-(defn freeze-atoms
-  " Returns a static snapshot of all loaded atoms. "
-  []
-  (let [snapshot {}]
-    (.map (keys ATOMS) (fn [i]
-      (let [frozen (freeze-atom (aget ATOMS i))]
-        (set! (aget snapshot i) frozen))))
-    snapshot))
-
-(defn freeze-atom
-  " Returns a static snapshot of a single atom. "
-  [atom]
-  (let [frozen
-          { :name     atom.name
-            :path     (path.relative root-dir atom.path)
-            :source   (atom.source)
-            :compiled atom.compiled.output.code
-            :derefs   atom.derefs }]
-    (if atom.evaluated (set! frozen.value (atom.value)))
-    (set! frozen.timestamp (Math.floor (Date.now)))
-    frozen))
 
 (defn run-atom
   " Promises to evaluate an atom, if it exists. "
@@ -184,23 +153,26 @@
     (try (resolve (evaluate-atom-sync atom))
       (catch e (reject e))))))
 
-(defn make-dereferencer
-  " Returns a new atom dereferencer that keeps track of what atoms
-    have actually been dereferenced at runtime. "
-  []
-  (let [deref-deps
-          []
-        dereferencer
-          (fn dereferencer [atom]
-            (if (string? atom) (dereferencer (aget ATOMS atom))
-              (do
-                (if (= -1 (deref-deps.index-of atom.name))
-                  (deref-deps.push atom.name))
-                (if (and atom.evaluated (not atom.outdated))
-                  (.value atom))
-                  (.value (evaluate-atom-sync atom)))))]
-    (set! dereferencer.deps deref-deps)
-    dereferencer))
+(defn make-atom-context [atom]
+  " Prepares an execution context with globals used by atoms. "
+  (let [context-name (path.resolve root-dir atom.name)
+        context      (runtime.make-context context-name)]
+    ; can't use assoc because the resulting object is uncontextified
+    (set! context.log (logging/get-logger (str (colors.bold "@") atom.name)))
+    (set! context._   (get-atom-tree atom))
+    context))
+
+(defn get-atom-tree [start-atom]
+  (let [tree {}]
+    (.map (keys ATOMS) (fn [atom-name]
+      (let [atom (aget ATOMS atom-name)]
+        (Object.define-property tree (translate atom.name)
+          { :configurable true
+            :enumerable   true
+            :get (fn []  (if (not atom.evaluated) (evaluate-atom atom))
+                         (atom.value))
+            :set (fn [v] (atom.value.set v)) }))))
+    tree))
 
 (defn evaluate-atom-sync
   " Evaluates the atom in a newly created context. "
@@ -210,21 +182,11 @@
   (if (and atom.evaluated (not atom.outdated))
     atom
     (do
-
       ; compile atom code if not compiled yet
       (if (not atom.compiled) (compile-atom-sync atom))
-      (let [code    atom.compiled.output.code
-            context (runtime.make-context (path.resolve root-dir atom.name))]
 
-        ; add a nicer logger
-        (set! context.log
-          (logging.get-logger (str (colors.bold "@") atom.name)))
-
-        ; make loaded atoms available in context; add atom dereferencer
-        (.map (keys ATOMS) (fn [i]
-          (let [atom (aget ATOMS i)]
-            (set! (aget context (translate atom.name)) atom))))
-        (set! context.deref (make-dereferencer))
+      ; prepare an execution context for the atom
+      (let [context (make-atom-context atom)]
 
         ; add browserify require to context
         (if process.browser (set! context.require require))
@@ -233,8 +195,10 @@
         (let [old-value (atom.value)]
           (if (and old-value old-value.destroy) (old-value.destroy)))
 
-        (let [value (vm.run-in-context (runtime.wrap code) context
-                      { :filename atom.name })]
+        ; execute the atom code
+        (let [value (vm.run-in-context
+                      (runtime.wrap atom.compiled.output.code)
+                      context { :filename atom.name })]
 
           ; if a runtime error has arisen, throw it upwards
           (if context.error
@@ -246,34 +210,34 @@
               (atom.value.set value)
               atom)))))))
 
-(defn get-deps
-  " Returns a processed list of the dependencies of an atom; used by etude-web "
+;;
+;; freezing atoms for serialization
+;;
+
+(defn freeze-atoms
+  " Returns a static snapshot of all loaded atoms. "
+  []
+  (let [snapshot {}]
+    (.map (keys ATOMS) (fn [i]
+      (let [frozen (freeze-atom (aget ATOMS i))]
+        (set! (aget snapshot i) frozen))))
+    snapshot))
+
+(defn freeze-atom
+  ;" Returns a static snapshot of a single atom. "
   [atom]
-  (let [derefs
-          []
-        requires
-          []
-        find-requires
-          (fn [atom]
-            (atom.requires.map (fn [req]
-              (let [resolved (resolve.sync req { :basedir    root-dir
-                                                 :extensions [".js" ".wisp"] })]
-                (if (= -1 (requires.index-of resolved)) (do
-                  (requires.push resolved)))))))
-        add-dep
-          nil
-        _
-          (set! add-dep (fn add-dep [atom-name]
-            (if (= -1 (derefs.index-of atom-name))
-              (let [dep (aget ATOMS atom-name)]
-                (if (not dep) (throw (Error. (str "No atom " atom-name))))
-                (derefs.push atom-name)
-                (find-requires dep)
-                (dep.derefs.map add-dep))))) ]
-    (find-requires atom)
-    (atom.derefs.map add-dep)
-    { :derefs   derefs
-      :requires requires }))
+  (let [frozen
+          { :name     atom.name
+            :path     (path.relative root-dir atom.path)
+            :source   (atom.source)
+            :compiled atom.compiled.output.code }]
+    (if atom.evaluated (set! frozen.value (atom.value)))
+    (set! frozen.timestamp (Math.floor (Date.now)))
+    frozen))
+
+;;
+;; utilities
+;;
 
 (defn unique
   " Filters an array into a set of unique elements. "
