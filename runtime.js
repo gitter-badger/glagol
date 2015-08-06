@@ -16,18 +16,40 @@ var wisp = module.exports.wisp =
   , runtime:  require('wisp/runtime.js')
   , sequence: require('wisp/sequence.js') };
 
-// patch translate-identifier-word to translate
-// slashes into nested namespace references
-var _writer = require('wisp/backend/escodegen/writer.js');
-var _translate = _writer.translateIdentifierWord;
-_writer.translateIdentifierWord = function () {
-  var id = _translate.apply(null, arguments);
-  //log(arguments[0], '=>', id);
-  return id;
-  //return id.split('/').join('._.');
-}
-
+// here's a logger
 var log = logging.getLogger('runtime');
+
+(function () {
+  // writer monkeypatches
+  // TODO contribute to upstream
+  var _writer = require('wisp/backend/escodegen/writer.js');
+
+  // patch translate-identifier-word to translate
+  // slashes into nested namespace references
+  // TODO if this is disabled, why does it work?
+  var _translate = _writer.translateIdentifierWord;
+  _writer.translateIdentifierWord = function () {
+    var id = _translate.apply(null, arguments);
+    //log(arguments[0], '=>', id);
+    return id;
+    //return id.split('/').join('._.');
+  }
+
+  // patch write-def to write private functions as
+  // `function x () {}` rather than `var x = function x () {}`
+  // TODO 'originam-form' should be 'original-form' in the originam code
+  var _writeDef = _writer.writeDef;
+  _writer.__writers__.def = _writer.writeDef = function (form) {
+    var isPrivateDefn = form.init.op === 'fn' && !form.export;;
+    return isPrivateDefn ?
+      wisp.sequence.conj(
+        wisp.sequence.assoc(
+          _writer.write(form.init), 'type', 'FunctionDeclaration'),
+        _writer.writeLocation(
+          (form || 0)['form'], (form || 0)['originam-form'])
+      ) : _writeDef(form);
+  }
+})();
 
 function compileSource (source, filename, raw) {
   raw = raw || false;
