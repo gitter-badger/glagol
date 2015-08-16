@@ -41,7 +41,7 @@
     (set! watcher (chokidar.watch "" { :persistent true :alwaysStat true }))))
 
 ;;
-;; project-level operations
+;; ignition
 ;;
 
 (defn start
@@ -52,6 +52,10 @@
   (.then (list-atoms dir) (fn [atom-paths]
     (Q.allSettled (atom-paths.map load-atom)))))
 
+;;
+;; loading and reloading
+;;
+
 (defn list-atoms
   " Promises a list of atoms in a specified directory. "
   [dir]
@@ -60,10 +64,6 @@
       (set! atoms (atoms.filter (fn [a] (= -1 (a.index-of "node_modules")))))
       (if err (do (log err) (reject err)))
       (resolve atoms))))))
-
-;;
-;; atom-level operations
-;;
 
 (defn- updated
   " Emits when an aspect of an atom (source code, compiled code, value)
@@ -79,17 +79,21 @@
       (if err
         (if (= err.code "EISDIR")
           (do (log (colors.gray "█") (colors.blue (path.basename atom-path)))
-              (resolve))
+              (install-atom resolve (make-atom-directory atom-path)))
           (do (log err)
               (reject err)))
         (let [rel-path (path.relative root-dir atom-path)
               atom     (make-atom rel-path src)]
-          (set! (aget ATOMS (translate rel-path)) atom)
           (updated atom :value)
           (watcher.add atom-path)
           (log (colors.gray (if (= i (- arr.length 1)) "└──" "├──"))
             (colors.green atom.name))
-          (resolve atom))))))))
+          (install-atom resolve atom))))))))
+
+(defn- install-atom [resolve atom]
+  (let [rel-path (path.relative root-dir atom.path)]
+    (set! (aget ATOMS (translate rel-path)) atom)
+    (resolve atom)))
 
 (defn reload-atom
   " Reloads an atom's source code from a file.
@@ -104,6 +108,10 @@
 
 (watcher.on "change" reload-atom)
 ;(runtime.compile-source (atom.source) atom.name)
+
+;;
+;; constructors
+;;
 
 (defn make-atom
   " Creates a new atom, optionally with a preloaded source. "
@@ -135,6 +143,16 @@
     (atom.value (updated.bind nil atom :value))
 
     atom))
+
+(defn make-atom-directory
+  [atom-path]
+  { :type "AtomDirectory"
+    :name (path.resolve root-dir atom-path)
+    :path atom-path })
+
+;;
+;; compilation and evaluation
+;;
 
 (defn compile-atom-sync
   " Compiles an atom's source code and determines its dependencies. "
@@ -288,9 +306,9 @@
 
 (defn- add-dep
   [deps reqs from to]
+  (log (keys ATOMS))
   (log.as :add-dep deps.length from.name to)
 
-  ; TODO support more than 1 level of directories
   (let [rel (path.relative (get-root-dir)
                            (path.dirname from.path))]
     (if rel (set! to (conj (rel.replace "/" ".") "." to))))
