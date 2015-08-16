@@ -263,24 +263,30 @@
 ;; atom interdependency management
 ;;
 
+(defn- resolve-atom-prefix
+  [from to]
+  (conj (.join (.slice (from.name.split "/") 0 -1) ".") "." to))
+
 (defn- detect-and-parse-deref
   " Hacks detective module to find `_.<atom-name>`
     expressions (as compiled from `./<atom-name>` in wisp). "
-  [node]
+  [atom node]
   (set! node.arguments (or node.arguments []))
   (if (and (= node.type "MemberExpression")
            (= node.object.type "Identifier")
            (= node.object.name "_"))
-    (loop [step  node
+    (loop [step  node.parent
            value node.property.name]
-      (if (and step.parent
-               (= step.parent.type "MemberExpression")
-               (> (.index-of (keys ATOMS) value) -1))
-        (recur step.parent (conj value "." step.parent.property.name))
+      ;(log.as :detect value)
+      (log.as :--> value (.index-of (keys ATOMS) value))
+      (if (and step
+               (= step.type "MemberExpression"))
+               ;(> (.index-of (keys ATOMS) value) -1))
+        (recur step.parent (conj value "." step.property.name))
         (do
           (set! node.arguments
             [ { :type  "Literal"
-                :value value } ])
+                :value (resolve-atom-prefix atom value) } ])
           true)))
     false))
 
@@ -291,7 +297,7 @@
         code      atom.compiled.output.code
         results   (detective.find code
                   { :word      ".*"
-                    :isRequire detect-and-parse-deref })]
+                    :isRequire (detect-and-parse-deref.bind nil atom) })]
     (unique results.strings)))
 
 (defn- find-requires
@@ -309,9 +315,9 @@
   (log (keys ATOMS))
   (log.as :add-dep deps.length from.name to)
 
-  (let [rel (path.relative (get-root-dir)
-                           (path.dirname from.path))]
-    (if rel (set! to (conj (rel.replace "/" ".") "." to))))
+  ;(let [rel (path.relative (get-root-dir)
+                           ;(path.dirname from.path))]
+    ;(if rel (set! to (conj (rel.replace "/" ".") "." to))))
 
   (if (= -1 (deps.index-of to))
     (let [dep (aget ATOMS to)]
