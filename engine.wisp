@@ -47,17 +47,16 @@
 (defn start
   " Starts up the engine in a specified root directory. "
   [dir]
+  (log "starting etude engine in" (colors.green dir))
   (set! root-dir dir)
   (.then (list-atoms dir) (fn [atom-paths]
-    (let [names (.join (atom-paths.map (path.relative.bind nil dir)) " ")]
-      (log "loading atoms" (colors.bold names) "from" (colors.green dir)))
     (Q.allSettled (atom-paths.map load-atom)))))
 
 (defn list-atoms
   " Promises a list of atoms in a specified directory. "
   [dir]
   (Q.Promise (fn [resolve reject]
-    (glob (path.join dir "**" "*") { :nodir true } (fn [err atoms]
+    (glob (path.join dir "**" "*") {} (fn [err atoms]
       (set! atoms (atoms.filter (fn [a] (= -1 (a.index-of "node_modules")))))
       (if err (do (log err) (reject err)))
       (resolve atoms))))))
@@ -74,16 +73,23 @@
 
 (defn load-atom
   " Loads an atom from the specified path, and adds it to the watcher. "
-  [atom-path]
+  [atom-path i arr]
   (Q.Promise (fn [resolve reject]
     (fs.read-file atom-path "utf-8" (fn [err src]
-      (if err (do (log err) (reject err)))
-      (let [rel-path (path.relative root-dir atom-path)
-            atom     (make-atom rel-path src)]
-        (set! (aget ATOMS (translate rel-path)) atom)
-        (updated atom :value)
-        (watcher.add atom-path)
-        (resolve atom)))))))
+      (if err
+        (if (= err.code "EISDIR")
+          (do (log (colors.gray "█") (colors.blue (path.basename atom-path)))
+              (resolve))
+          (do (log err)
+              (reject err)))
+        (let [rel-path (path.relative root-dir atom-path)
+              atom     (make-atom rel-path src)]
+          (set! (aget ATOMS (translate rel-path)) atom)
+          (updated atom :value)
+          (watcher.add atom-path)
+          (log (colors.gray (if (= i (- arr.length 1)) "└──" "├──"))
+            (colors.green atom.name))
+          (resolve atom))))))))
 
 (defn reload-atom
   " Reloads an atom's source code from a file.
@@ -250,7 +256,8 @@
     (loop [step  node
            value node.property.name]
       (if (and step.parent
-               (= step.parent.type "MemberExpression"))
+               (= step.parent.type "MemberExpression")
+               (> (.index-of (keys ATOMS) value) -1))
         (recur step.parent (conj value "." step.parent.property.name))
         (do
           (set! node.arguments
