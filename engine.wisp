@@ -57,7 +57,7 @@
   " Promises a list of atoms in a specified directory. "
   [dir]
   (Q.Promise (fn [resolve reject]
-    (glob (path.join dir "**" "*") {} (fn [err atoms]
+    (glob (path.join dir "**" "*") { :nodir true } (fn [err atoms]
       (set! atoms (atoms.filter (fn [a] (= -1 (a.index-of "node_modules")))))
       (if err (do (log err) (reject err)))
       (resolve atoms))))))
@@ -234,6 +234,79 @@
     (if atom.evaluated (set! frozen.value (atom.value)))
     (set! frozen.timestamp (Math.floor (Date.now)))
     frozen))
+
+;;
+;; atom interdependency management
+;;
+
+(defn- detect-and-parse-deref
+  " Hacks detective module to find `_.<atom-name>`
+    expressions (as compiled from `./<atom-name>` in wisp). "
+  [node]
+  (set! node.arguments (or node.arguments []))
+  (if (and (= node.type "MemberExpression")
+           (= node.object.type "Identifier")
+           (= node.object.name "_"))
+    (loop [step  node
+           value node.property.name]
+      (if (and step.parent
+               (= step.parent.type "MemberExpression"))
+        (recur step.parent (conj value "." step.parent.property.name))
+        (do
+          (set! node.arguments
+            [ { :type  "Literal"
+                :value value } ])
+          true)))
+    false))
+
+(defn- find-derefs
+  " Returns a list of atoms referenced from an atom. "
+  [atom]
+  (let [detective (require "detective")
+        code      atom.compiled.output.code
+        results   (detective.find code
+                  { :word      ".*"
+                    :isRequire detect-and-parse-deref })]
+    (unique results.strings)))
+
+(defn- find-requires
+  [requires atom]
+  (atom.requires.map (fn [req]
+    (let [resolved
+            (.sync (require "resolve") req
+              { :basedir    (path.dirname atom.path)
+                :extensions [".js" ".wisp"] })]
+      (if (= -1 (requires.index-of resolved))
+        (requires.push resolved))))))
+
+(defn- add-dep
+  [deps reqs from to]
+  (log.as :add-dep deps.length from.name to)
+
+  ; TODO support more than 1 level of directories
+  (let [rel (path.relative (get-root-dir)
+                           (path.dirname from.path))]
+    (if rel (set! to (conj (rel.replace "/" ".") "." to))))
+
+  (if (= -1 (deps.index-of to))
+    (let [dep (aget ATOMS to)]
+      (if (not dep) (throw (Error. (str "No atom " to))))
+      (deps.push to)
+      (find-requires reqs dep)
+      (.map (find-derefs dep)
+        (fn [to] (add-dep deps reqs dep to))))))
+
+(defn get-deps
+  " Returns a processed list of the dependencies of an atom. "
+  [atom]
+  (log.as :get-deps atom.path)
+  (let [reqs []  ;; native library requires
+        deps []] ;; atom dependencies a.k.a. derefs
+    (find-requires reqs atom)
+    (.map (find-derefs atom)
+      (fn [atom-name] (add-dep deps reqs atom atom-name)))
+    { :derefs   deps
+      :requires reqs }))
 
 ;;
 ;; utilities

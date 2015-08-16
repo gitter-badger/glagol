@@ -23,7 +23,7 @@ if (process.argv.length <= 2) {
     }
     var stat = fs.statSync(entryFile);
     if (stat.isFile()) {
-      rootDir = path.dirname(entryFile);
+      rootDir = process.cwd();
       console.log("Assuming root directory:", rootDir);
       console.log("Loading entry point:", entryFile);
     } else if (stat.isDirectory()) {
