@@ -267,6 +267,10 @@
   [from to]
   (conj (.join (.slice (from.name.split "/") 0 -1) ".") "." to))
 
+(defn- detected [node value]
+  (set! node.arguments [{ :type "Literal" :value value }])
+  true)
+
 (defn- detect-and-parse-deref
   " Hacks detective module to find `_.<atom-name>`
     expressions (as compiled from `./<atom-name>` in wisp). "
@@ -276,18 +280,13 @@
            (= node.object.type "Identifier")
            (= node.object.name "_"))
     (loop [step  node.parent
-           value node.property.name]
-      ;(log.as :detect value)
-      (log.as :--> value (.index-of (keys ATOMS) value))
-      (if (and step
-               (= step.type "MemberExpression"))
-               ;(> (.index-of (keys ATOMS) value) -1))
-        (recur step.parent (conj value "." step.property.name))
-        (do
-          (set! node.arguments
-            [ { :type  "Literal"
-                :value (resolve-atom-prefix atom value) } ])
-          true)))
+           value (resolve-atom-prefix atom node.property.name)]
+      (if (not (and step (= step.type "MemberExpression")))
+        (detected node value)
+        (let [next-value (conj value "." step.property.name)]
+          (if (= -1 (.index-of (keys ATOMS) next-value))
+            (detected node value)
+            (recur step.parent next-value)))))
     false))
 
 (defn- find-derefs
@@ -312,13 +311,7 @@
 
 (defn- add-dep
   [deps reqs from to]
-  (log (keys ATOMS))
   (log.as :add-dep deps.length from.name to)
-
-  ;(let [rel (path.relative (get-root-dir)
-                           ;(path.dirname from.path))]
-    ;(if rel (set! to (conj (rel.replace "/" ".") "." to))))
-
   (if (= -1 (deps.index-of to))
     (let [dep (aget ATOMS to)]
       (if (not dep) (throw (Error. (str "No atom " to))))
