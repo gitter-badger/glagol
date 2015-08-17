@@ -92,7 +92,7 @@
 
 (defn- install-atom [resolve atom]
   (let [rel-path (path.relative root-dir atom.path)]
-    (set! (aget ATOMS (translate rel-path)) atom)
+    (set! (aget ATOMS (.replace (translate rel-path) "." "/")) atom)
     (resolve atom)))
 
 (defn reload-atom
@@ -265,7 +265,7 @@
 
 (defn- resolve-atom-prefix
   [from to]
-  (conj (.join (.slice (from.name.split "/") 0 -1) ".") "." to))
+  (conj (.join (.slice (from.name.split "/") 0 -1) "/") "/" to))
 
 (defn- detected [node value]
   (set! node.arguments [{ :type "Literal" :value value }])
@@ -283,7 +283,7 @@
            value (resolve-atom-prefix atom node.property.name)]
       (if (not (and step (= step.type "MemberExpression")))
         (detected node value)
-        (let [next-value (conj value "." step.property.name)]
+        (let [next-value (conj value "/" step.property.name)]
           (if (= -1 (.index-of (keys ATOMS) next-value))
             (detected node value)
             (recur step.parent next-value)))))
@@ -314,7 +314,8 @@
   (log.as :add-dep deps.length from.name to)
   (if (= -1 (deps.index-of to))
     (let [dep (aget ATOMS to)]
-      (if (not dep) (throw (Error. (str "No atom " to))))
+      (if (not dep) (throw (Error.
+        (str "No atom " to " (from " from.name ")"))))
       (deps.push to)
       (find-requires reqs dep)
       (.map (find-derefs dep)
