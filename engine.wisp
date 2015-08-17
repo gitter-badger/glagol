@@ -292,22 +292,30 @@
 (defn- find-derefs
   " Returns a list of atoms referenced from an atom. "
   [atom]
-  (let [detective (require "detective")
-        code      atom.compiled.output.code
-        results   (detective.find code
-                  { :word      ".*"
-                    :isRequire (detect-and-parse-deref.bind nil atom) })]
-    (unique results.strings)))
+  (cond
+    (= atom.type "Atom")
+      (let [detective (require "detective")
+            code      atom.compiled.output.code
+            results   (detective.find code
+                      { :word      ".*"
+                        :isRequire (detect-and-parse-deref.bind nil atom) })]
+        (unique results.strings))
+    (= atom.type "AtomDirectory")
+      []))
 
 (defn- find-requires
   [requires atom]
-  (atom.requires.map (fn [req]
-    (let [resolved
-            (.sync (require "resolve") req
-              { :basedir    (path.dirname atom.path)
-                :extensions [".js" ".wisp"] })]
-      (if (= -1 (requires.index-of resolved))
-        (requires.push resolved))))))
+  (cond
+    (= atom.type "Atom")
+      (atom.requires.map (fn [req]
+        (let [resolved
+                (.sync (require "resolve") req
+                  { :basedir    (path.dirname atom.path)
+                    :extensions [".js" ".wisp"] })]
+          (if (= -1 (requires.index-of resolved))
+            (requires.push resolved)))))
+    (= atom.type "AtomDirectory")
+      []))
 
 (defn- add-dep
   [deps reqs from to]
@@ -318,8 +326,7 @@
         (str "No atom " to " (from " from.name ")"))))
       (deps.push to)
       (find-requires reqs dep)
-      (.map (find-derefs dep)
-        (fn [to] (add-dep deps reqs dep to))))))
+      (map (fn [to] (add-dep deps reqs dep to)) (find-derefs dep)))))
 
 (defn get-deps
   " Returns a processed list of the dependencies of an atom. "
