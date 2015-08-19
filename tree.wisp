@@ -19,8 +19,7 @@
         (if (not (aget current-dir child-dir)) (aset current-dir child-dir {}))
         (recur (descend-path atom-path) (aget current-dir child-dir))))))
 
-(defn add-atom [current-dir evaluate-atom atom-path atom]
-  (console.log "add-atom" current-dir atom-path atom)
+(defn add-atom [evaluate-atom current-dir atom-path atom]
   (Object.define-property current-dir atom-path
     { :enumerable   true
       :configurable true
