@@ -81,10 +81,8 @@
       (fs.read-file atom-path "utf-8" (fn [err src]
         (if err
           (if (= err.code "EISDIR")
-            (do ;
-                (load-atom-directory atom-path))
-            (do (log err)
-                (reject err)))
+            (resolve (load-atom-directory atom-path))
+            (do (log err) (reject err)))
           (let [atom (make-atom rel-path src)]
             (updated atom :value)
             (watcher.add atom-path)
