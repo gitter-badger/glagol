@@ -74,21 +74,21 @@
 (defn load-atom
   " Loads an atom from the specified path, and adds it to the watcher. "
   [atom-path i arr]
-  (Q.Promise (fn [resolve reject]
-    (fs.read-file atom-path "utf-8" (fn [err src]
-      (if err
-        (if (= err.code "EISDIR")
-          (do (log (colors.gray "█") (colors.blue (path.basename atom-path)))
-              (install-atom resolve (make-atom-directory atom-path)))
-          (do (log err)
-              (reject err)))
-        (let [rel-path (path.relative root-dir atom-path)
-              atom     (make-atom rel-path src)]
-          (updated atom :value)
-          (watcher.add atom-path)
-          (log (colors.gray (if (= i (- arr.length 1)) "└──" "├──"))
-            (colors.green atom.name))
-          (install-atom resolve atom))))))))
+  (let [rel-path (path.relative root-dir atom-path)]
+    (Q.Promise (fn [resolve reject]
+      (fs.read-file atom-path "utf-8" (fn [err src]
+        (if err
+          (if (= err.code "EISDIR")
+            (do (log (colors.gray "█") (colors.blue (path.basename atom-path)))
+                (install-atom resolve (make-atom-directory rel-path)))
+            (do (log err)
+                (reject err)))
+          (let [atom (make-atom rel-path src)]
+            (updated atom :value)
+            (watcher.add atom-path)
+            (log (colors.gray (if (= i (- arr.length 1)) "└──" "├──"))
+              (colors.green atom.name))
+            (install-atom resolve atom)))))))))
 
 (defn- install-atom [resolve atom]
   (let [rel-path (path.relative root-dir atom.path)]
@@ -147,8 +147,8 @@
 (defn make-atom-directory
   [atom-path]
   { :type "AtomDirectory"
-    :name (path.resolve root-dir atom-path)
-    :path atom-path })
+    :name atom-path
+    :path (path.resolve root-dir atom-path) })
 
 ;;
 ;; compilation and evaluation
@@ -248,16 +248,24 @@
     snapshot))
 
 (defn freeze-atom
-  ;" Returns a static snapshot of a single atom. "
+  " Returns a static snapshot of a single atom. "
   [atom]
-  (let [frozen
-          { :name     atom.name
-            :path     (path.relative root-dir atom.path)
-            :source   (atom.source)
-            :compiled atom.compiled.output.code }]
-    (if atom.evaluated (set! frozen.value (atom.value)))
-    (set! frozen.timestamp (Math.floor (Date.now)))
-    frozen))
+  (cond
+    (= atom.type "Atom")
+      (let [frozen
+              { :name     atom.name
+                :type     "Atom"
+                :path     (path.relative root-dir atom.path)
+                :source   (atom.source)
+                :compiled atom.compiled.output.code }]
+        (if atom.evaluated (set! frozen.value (atom.value)))
+        (set! frozen.timestamp (Math.floor (Date.now)))
+        frozen)
+    (= atom.type "AtomDirectory")
+      { :name      atom.name
+        :type      "AtomDirectory"
+        :path      (path.relative root-dir atom.path)
+        :timestamp (Math.floor (Date.now)) }))
 
 ;;
 ;; atom interdependency management
