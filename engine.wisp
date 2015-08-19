@@ -91,8 +91,9 @@
             (install-atom resolve atom)))))))))
 
 (defn- install-atom [resolve atom]
-  (let [rel-path (path.relative root-dir atom.path)]
-    (set! (aget ATOMS (.replace (translate rel-path) "." "/")) atom)
+  (let [rel-path (path.relative root-dir atom.path)
+        atom-key (rel-path.replace (RegExp. "\\." "g") "/")]
+    (aset ATOMS atom-key atom)
     (resolve atom)))
 
 (defn reload-atom
@@ -244,7 +245,7 @@
   (let [snapshot {}]
     (.map (keys ATOMS) (fn [i]
       (let [frozen (freeze-atom (aget ATOMS i))]
-        (set! (aget snapshot i) frozen))))
+        (aset snapshot i frozen))))
     snapshot))
 
 (defn freeze-atom
@@ -291,8 +292,9 @@
            value (resolve-atom-prefix atom node.property.name)]
       (if (not (and step (= step.type "MemberExpression")))
         (detected node value)
-        (let [next-value (conj value "/" step.property.name)]
-          (if (= -1 (.index-of (keys ATOMS) next-value))
+        (let [next-value (conj value "/" step.property.name)
+              not-atom   (= -1 (.index-of (keys ATOMS) next-value))]
+          (if not-atom
             (detected node value)
             (recur step.parent next-value)))))
     false))

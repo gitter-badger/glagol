@@ -13,11 +13,23 @@ var fs      = require('fs')
 var wisp = module.exports.wisp =
   { ast:      require('wisp/ast.js')
   , compiler: require('wisp/compiler.js')
+  , expander: require('wisp/expander.js')
   , runtime:  require('wisp/runtime.js')
-  , sequence: require('wisp/sequence.js') };
+  , sequence: require('wisp/sequence.js')
+  , string:   require('wisp/string.js')};
 
 // here's a logger
 var log = logging.getLogger('runtime');
+
+// add arrow macro from https://github.com/gozala/wisp#another-macro-example
+// TODO make it work with (fn []) ?
+wisp.expander.installMacro("->", function to () {
+  var operations = Array.prototype.slice.call(arguments, 0);
+  var s = wisp.sequence;
+  return s.reduce(function (form, op) {
+    return s.cons(s.first(op), s.cons(form, s.rest(op)))
+  }, s.first(operations), s.rest(operations));
+});
 
 (function () {
   // writer monkeypatches
@@ -124,6 +136,7 @@ function makeContext (filename, elevated) {
 
   [ wisp.ast
   , wisp.sequence
+  , wisp.string
   , wisp.runtime ].map(importIntoContext.bind(null, context));
 
   return vm.createContext(context);
