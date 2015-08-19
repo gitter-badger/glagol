@@ -49,46 +49,52 @@
   [dir]
   (log "starting etude engine in" (colors.green dir))
   (set! root-dir dir)
-  (.then (list-atoms dir) (fn [atom-paths]
-    (Q.allSettled (atom-paths.map load-atom)))))
+  (load-atom-directory dir))
 
 ;;
 ;; loading and reloading
 ;;
 
-(defn list-atoms
-  " Promises a list of atoms in a specified directory. "
+(defn load-atom-directory
   [dir]
   (Q.Promise (fn [resolve reject]
-    (glob (path.join dir "**" "*") {} (fn [err atoms]
-      (set! atoms (atoms.filter (fn [a] (= -1 (a.index-of "node_modules")))))
-      (if err (do (log err) (reject err)))
-      (resolve atoms))))))
+    (glob (path.join dir "*") {} (fn [err files]
+      (set! files (ignore-files files))
+      (if err (reject err))
+      (do
+        (log (colors.gray "█") (colors.blue (path.basename dir)))
+        (resolve (Q.allSettled (files.map (fn [filename i]
+          (log (colors.gray (if (= i (- files.length 1)) "└──" "├──"))
+               (colors.green (path.basename filename)))
+          (load-atom filename)))))))))))
+
+(defn- ignore-files
+  [files]
+  (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
+
+(defn load-atom
+  " Loads an atom from the specified path, and adds it to the watcher. "
+  [atom-path i arr]
+  ;(log.as :load-atom atom-path)
+  (Q.Promise (fn [resolve reject]
+    (let [rel-path (path.relative root-dir atom-path)]
+      (fs.read-file atom-path "utf-8" (fn [err src]
+        (if err
+          (if (= err.code "EISDIR")
+            (do ;
+                (load-atom-directory atom-path))
+            (do (log err)
+                (reject err)))
+          (let [atom (make-atom rel-path src)]
+            (updated atom :value)
+            (watcher.add atom-path)
+            (install-atom resolve atom)))))))))
 
 (defn- updated
   " Emits when an aspect of an atom (source code, compiled code, value)
     has been updated. "
   [atom what]
   (events.emit (str "atom.updated." what) (freeze-atom atom)))
-
-(defn load-atom
-  " Loads an atom from the specified path, and adds it to the watcher. "
-  [atom-path i arr]
-  (let [rel-path (path.relative root-dir atom-path)]
-    (Q.Promise (fn [resolve reject]
-      (fs.read-file atom-path "utf-8" (fn [err src]
-        (if err
-          (if (= err.code "EISDIR")
-            (do (log (colors.gray "█") (colors.blue (path.basename atom-path)))
-                (install-atom resolve (make-atom-directory rel-path)))
-            (do (log err)
-                (reject err)))
-          (let [atom (make-atom rel-path src)]
-            (updated atom :value)
-            (watcher.add atom-path)
-            (log (colors.gray (if (= i (- arr.length 1)) "└──" "├──"))
-              (colors.green atom.name))
-            (install-atom resolve atom)))))))))
 
 (defn- install-atom [resolve atom]
   (let [rel-path (path.relative root-dir atom.path)
