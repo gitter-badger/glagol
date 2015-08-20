@@ -10,6 +10,7 @@
 (def ^:private path      (require "path"))
 (def ^:private resolve   (require "resolve"))
 (def ^:private runtime   (require "./runtime.js"))
+(def ^:private tree      (require "./tree.wisp"))
 (def ^:private url       (require "url"))
 (def ^:private vm        (require "vm"))
 
@@ -87,6 +88,7 @@
             (updated atom :value)
             (watcher.add atom-path)
             (install-atom resolve atom)))))))))
+            ;(install-atom resolve atom)))))))))
 
 (defn- updated
   " Emits when an aspect of an atom (source code, compiled code, value)
@@ -94,11 +96,22 @@
   [atom what]
   (events.emit (str "atom.updated." what) (freeze-atom atom)))
 
-(defn- install-atom [resolve atom]
-  (let [rel-path (path.relative root-dir atom.path)
-        atom-key (rel-path.replace (RegExp. "\\." "g") "/")]
-    (aset ATOMS atom-key atom)
-    (resolve atom)))
+(defn install-atom [resolve atom]
+  (loop [atom-path   atom.path
+         current-dir ATOMS]
+    (if (= -1 (atom-path.index-of "/"))
+      (do
+        (tree.add-atom evaluate-atom current-dir atom-path atom)
+        (resolve atom))
+      (let [child-dir (-> atom-path (.split "/") (aget 0))]
+        (if (not (aget current-dir child-dir)) (aset current-dir child-dir {}))
+        (recur (tree.descend-path atom-path) (aget current-dir child-dir))))))
+
+;(defn- install-atom [resolve atom]
+  ;(let [rel-path (path.relative root-dir atom.path)
+        ;atom-key (rel-path.replace (RegExp. "\\." "g") "/")]
+    ;(aset ATOMS atom-key atom)
+    ;(resolve atom)))
 
 (defn reload-atom
   " Reloads an atom's source code from a file.
@@ -188,20 +201,8 @@
         context      (runtime.make-context context-name)]
     ; can't use assoc because the resulting object is uncontextified
     (set! context.log (logging/get-logger (str (colors.bold "@") atom.name)))
-    (set! context._   (get-atom-tree atom))
+    (set! context._   (tree.get-atom-tree ATOMS atom))
     context))
-
-(defn get-atom-tree [start-atom]
-  (let [tree {}]
-    (.map (keys ATOMS) (fn [atom-name]
-      (let [atom (aget ATOMS atom-name)]
-        (Object.define-property tree (translate atom.name)
-          { :configurable true
-            :enumerable   true
-            :get (fn []  (if (not atom.evaluated) (evaluate-atom atom))
-                         (atom.value))
-            :set (fn [v] (atom.value.set v)) }))))
-    tree))
 
 (defn evaluate-atom-sync
   " Evaluates the atom in a newly created context. "
