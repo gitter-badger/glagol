@@ -25,7 +25,7 @@
 
 (def root-dir nil)
 (defn get-root-dir [] root-dir)
-(def ATOMS {})
+(def NOTIONS {})
 
 (def log (logging.get-logger "engine"))
 (def events (new (.-EventEmitter2 (require "eventemitter2"))
@@ -50,7 +50,7 @@
   [dir]
   (log "starting etude engine in" (colors.green dir))
   (set! root-dir dir)
-  (load-atom-directory dir))
+  (load-notion-directory dir))
 
 ;;
 ;; loading and reloading
@@ -65,70 +65,70 @@
   (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
 
 (defn- updated
-  " Emits when an aspect of an atom (source code, compiled code, value)
+  " Emits when an aspect of a notion (source code, compiled code, value)
     has been updated. "
-  [atom what]
-  (events.emit (str "atom.updated." what) (freeze-atom atom)))
+  [notion what]
+  (events.emit (str "notion.updated." what) (freeze-notion notion)))
 
-(defn load-atom-directory
+(defn load-notion-directory
   [dir]
   (Q.Promise (fn [resolve reject]
     (glob (path.join dir "*") {} (fn [err files]
       (set! files (ignore-files files))
       (if err (reject err))
-      (resolve (Q.allSettled (files.map load-atom))))))))
+      (resolve (Q.allSettled (files.map load-notion))))))))
 
-(defn load-atom
-  " Loads an atom from the specified path, and adds it to the watcher. "
-  [atom-path i arr]
+(defn load-notion
+  " Loads a notion from the specified path, and adds it to the watcher. "
+  [notion-path i arr]
   (Q.Promise (fn [resolve reject]
-    (let [rel-path (path.relative root-dir atom-path)]
-      (fs.read-file atom-path "utf-8" (fn [err src]
+    (let [rel-path (path.relative root-dir notion-path)]
+      (fs.read-file notion-path "utf-8" (fn [err src]
         (if err
           (if (= err.code "EISDIR")
-            (resolve (load-atom-directory atom-path))
+            (resolve (load-notion-directory notion-path))
             (do (log err) (reject err)))
-          (let [atom (make-atom rel-path src)]
-            (updated atom :value)
-            (watcher.add atom-path)
-            (install-atom resolve atom)))))))))
+          (let [notion (make-notion rel-path src)]
+            (updated notion :value)
+            (watcher.add notion-path)
+            (install-notion resolve notion)))))))))
 
-(defn install-atom [resolve atom]
-  (loop [atom-path   atom.name
-         current-dir ATOMS]
-    (if (= -1 (atom-path.index-of "/"))
+(defn install-notion [resolve notion]
+  (loop [notion-path   notion.name
+         current-dir NOTIONS]
+    (if (= -1 (notion-path.index-of "/"))
       (do
-        (tree.add-atom evaluate-atom current-dir atom-path atom)
-        (resolve atom))
-      (let [child-dir (-> atom-path (.split "/") (aget 0))]
+        (tree.add-notion evaluate-notion current-dir notion-path notion)
+        (resolve notion))
+      (let [child-dir (-> notion-path (.split "/") (aget 0))]
         (if (not (aget current-dir child-dir)) (aset current-dir child-dir {}))
-        (recur (tree.descend-path atom-path) (aget current-dir child-dir))))))
+        (recur (tree.descend-path notion-path) (aget current-dir child-dir))))))
 
-(defn reload-atom
-  " Reloads an atom's source code from a file.
-    TODO: pass atom instead of path? "
-  [atom-path file-stat]
-  (fs.read-file atom-path "utf-8" (fn [err src]
+(defn reload-notion
+  " Reloads a notion's source code from a file.
+    TODO: pass notion instead of path? "
+  [notion-path file-stat]
+  (fs.read-file notion-path "utf-8" (fn [err src]
     (if err (do (log err) (throw err)))
-    (let [rel-path  (path.relative root-dir atom-path)
-          atom-name (translate rel-path)
-          atom      (aget ATOMS atom-name)]
-      (if (not (= src (atom.source))) (atom.source.set src))))))
+    (let [rel-path  (path.relative root-dir notion-path)
+          notion-name (translate rel-path)
+          notion      (aget NOTIONS notion-name)]
+      (if (not (= src (notion.source))) (notion.source.set src))))))
 
-(watcher.on "change" reload-atom)
-;(runtime.compile-source (atom.source) atom.name)
+(watcher.on "change" reload-notion)
+;(runtime.compile-source (notion.source) notion.name)
 
 ;;
 ;; constructors
 ;;
 
-(defn make-atom
-  " Creates a new atom, optionally with a preloaded source. "
-  [atom-path source]
-  (let [atom
-          { :type      "Atom"
-            :path      (path.resolve root-dir atom-path)
-            :name      atom-path
+(defn make-notion
+  " Creates a new notion, optionally with a preloaded source. "
+  [notion-path source]
+  (let [notion
+          { :type      "Notion"
+            :path      (path.resolve root-dir notion-path)
+            :name      notion-path
             :source    (observ (.trim (or source "")))
             :compiled  nil
             :requires  []
@@ -137,39 +137,39 @@
             :outdated  false }]
 
     ; compile source now and on update
-    (compile-atom-sync atom)
-    (atom.source (fn []
-      (updated atom :source)
-      (let [old-compiled (if atom.compiled atom.compiled.output.code nil)]
-        (compile-atom-sync atom)
-        (if (not (= old-compiled atom.compiled.output.code)) (do
-          (updated atom :compiled)
-          (if atom.evaluated (do
-            (set! atom.outdated true)
-            (evaluate-atom-sync atom))))))))
+    (compile-notion-sync notion)
+    (notion.source (fn []
+      (updated notion :source)
+      (let [old-compiled (if notion.compiled notion.compiled.output.code nil)]
+        (compile-notion-sync notion)
+        (if (not (= old-compiled notion.compiled.output.code)) (do
+          (updated notion :compiled)
+          (if notion.evaluated (do
+            (set! notion.outdated true)
+            (evaluate-notion-sync notion))))))))
 
     ; emit event on value update
-    (atom.value (updated.bind nil atom :value))
+    (notion.value (updated.bind nil notion :value))
 
-    atom))
+    notion))
 
-(defn make-atom-directory
-  [atom-path]
-  { :type "AtomDirectory"
-    :name atom-path
-    :path (path.resolve root-dir atom-path) })
+(defn make-notion-directory
+  [notion-path]
+  { :type "NotionDirectory"
+    :name notion-path
+    :path (path.resolve root-dir notion-path) })
 
 ;;
 ;; compilation and evaluation
 ;;
 
-(defn compile-atom-sync
-  " Compiles an atom's source code and determines its dependencies. "
-  [atom]
-  (set! atom.compiled (runtime.compile-source (atom.source) atom.name))
-  (set! atom.requires (unique (.-strings
-    (detective.find atom.compiled.output.code))))
-  atom)
+(defn compile-notion-sync
+  " Compiles a notion's source code and determines its dependencies. "
+  [notion]
+  (set! notion.compiled (runtime.compile-source (notion.source) notion.name))
+  (set! notion.requires (unique (.-strings
+    (detective.find notion.compiled.output.code))))
+  notion)
 
 (defn- descend-tree [tree path]
   (loop [current-node   tree
@@ -179,108 +179,108 @@
     (if (> path-fragments.length 0)
       (do
         (if (= -1 (.index-of (keys current-node) (aget path-fragments 0)))
-          (throw (Error. (str "No atom at path " path))))
+          (throw (Error. (str "No notion at path " path))))
         (recur
           (aget current-node (aget path-fragments 0))
           (path-fragments.slice 1)))
       current-node)))
 
-(defn run-atom
-  " Promises to evaluate an atom, if it exists. "
-  [atom-path]
+(defn run-notion
+  " Promises to evaluate a notion, if it exists. "
+  [notion-path]
   (Q.Promise (fn [resolve reject]
-    (resolve (evaluate-atom (descend-tree ATOMS atom-path))))))
+    (resolve (evaluate-notion (descend-tree NOTIONS notion-path))))))
 
-(defn evaluate-atom
-  " Promises to evaluate an atom. "
-  [atom]
+(defn evaluate-notion
+  " Promises to evaluate a notion. "
+  [notion]
   (Q.Promise (fn [resolve reject]
-    (try (resolve (evaluate-atom-sync atom))
+    (try (resolve (evaluate-notion-sync notion))
       (catch e (reject e))))))
 
-(defn make-atom-context [atom]
-  " Prepares an execution context with globals used by atoms. "
-  (let [context-name (path.resolve root-dir atom.name)
+(defn make-notion-context [notion]
+  " Prepares an execution context with globals used by notions. "
+  (let [context-name (path.resolve root-dir notion.name)
         context      (runtime.make-context context-name)]
     ; can't use assoc because the resulting object is uncontextified
-    (set! context.log (logging/get-logger (str (colors.bold "@") atom.name)))
-    (set! context._   (tree.get-atom-tree ATOMS atom))
+    (set! context.log (logging/get-logger (str (colors.bold "@") notion.name)))
+    (set! context._   (tree.get-notion-tree NOTIONS notion))
     context))
 
-(defn evaluate-atom-sync
-  " Evaluates the atom in a newly created context. "
-  [atom]
+(defn evaluate-notion-sync
+  " Evaluates the notion in a newly created context. "
+  [notion]
 
-  ; if the atom's value is up to date, there's nothing to do
-  (if (and atom.evaluated (not atom.outdated))
-    atom
+  ; if the notion's value is up to date, there's nothing to do
+  (if (and notion.evaluated (not notion.outdated))
+    notion
     (do
-      ; compile atom code if not compiled yet
-      (if (not atom.compiled) (compile-atom-sync atom))
+      ; compile notion code if not compiled yet
+      (if (not notion.compiled) (compile-notion-sync notion))
 
-      ; prepare an execution context for the atom
-      (let [context (make-atom-context atom)]
+      ; prepare an execution context for the notion
+      (let [context (make-notion-context notion)]
 
         ; add browserify require to context
         (if process.browser (set! context.require require))
 
         ; clean up previous instance if possible, and evaluate updated code
-        (let [old-value (atom.value)]
+        (let [old-value (notion.value)]
           (if (and old-value old-value.destroy) (old-value.destroy)))
 
-        ; execute the atom code
+        ; execute the notion code
         (let [value (vm.run-in-context
-                      (runtime.wrap atom.compiled.output.code)
-                      context { :filename atom.name })]
+                      (runtime.wrap notion.compiled.output.code)
+                      context { :filename notion.name })]
 
           ; if a runtime error has arisen, throw it upwards
           (if context.error
             (throw context.error)
 
-            ; otherwise store the updated value and return the atom
+            ; otherwise store the updated value and return the notion
             (do
-              (set! atom.evaluated true)
-              (atom.value.set value)
-              atom)))))))
+              (set! notion.evaluated true)
+              (notion.value.set value)
+              notion)))))))
 
 ;;
-;; freezing atoms for serialization
+;; freezing notions for serialization
 ;;
 
-(defn freeze-atoms
-  " Returns a static snapshot of all loaded atoms. "
+(defn freeze-notions
+  " Returns a static snapshot of all loaded notions. "
   []
   (let [snapshot {}]
-    (.map (keys ATOMS) (fn [i]
-      (let [frozen (freeze-atom (aget ATOMS i))]
+    (.map (keys NOTIONS) (fn [i]
+      (let [frozen (freeze-notion (aget NOTIONS i))]
         (aset snapshot i frozen))))
     snapshot))
 
-(defn freeze-atom
-  " Returns a static snapshot of a single atom. "
-  [atom]
+(defn freeze-notion
+  " Returns a static snapshot of a single notion. "
+  [notion]
   (cond
-    (= atom.type "Atom")
+    (= notion.type "Notion")
       (let [frozen
-              { :name     atom.name
-                :type     "Atom"
-                :path     (path.relative root-dir atom.path)
-                :source   (atom.source)
-                :compiled atom.compiled.output.code }]
-        (if atom.evaluated (set! frozen.value (atom.value)))
+              { :name     notion.name
+                :type     "Notion"
+                :path     (path.relative root-dir notion.path)
+                :source   (notion.source)
+                :compiled notion.compiled.output.code }]
+        (if notion.evaluated (set! frozen.value (notion.value)))
         (set! frozen.timestamp (Math.floor (Date.now)))
         frozen)
-    (= atom.type "AtomDirectory")
-      { :name      atom.name
-        :type      "AtomDirectory"
-        :path      (path.relative root-dir atom.path)
+    (= notion.type "NotionDirectory")
+      { :name      notion.name
+        :type      "NotionDirectory"
+        :path      (path.relative root-dir notion.path)
         :timestamp (Math.floor (Date.now)) }))
 
 ;;
-;; atom interdependency management
+;; notion interdependency management
 ;;
 
-(defn- resolve-atom-prefix
+(defn- resolve-notion-prefix
   [from to]
   (conj (.join (.slice (from.name.split "/") 0 -1) "/") "/" to))
 
@@ -289,72 +289,72 @@
   true)
 
 (defn- detect-and-parse-deref
-  " Hacks detective module to find `_.<atom-name>`
-    expressions (as compiled from `./<atom-name>` in wisp). "
-  [atom node]
+  " Hacks detective module to find `_.<notion-name>`
+    expressions (as compiled from `./<notion-name>` in wisp). "
+  [notion node]
   (set! node.arguments (or node.arguments []))
   (if (and (= node.type "MemberExpression")
            (= node.object.type "Identifier")
            (= node.object.name "_"))
     (loop [step  node.parent
-           value (resolve-atom-prefix atom node.property.name)]
+           value (resolve-notion-prefix notion node.property.name)]
       (if (not (and step (= step.type "MemberExpression")))
         (detected node value)
         (let [next-value (conj value "/" step.property.name)
-              not-atom   (= -1 (.index-of (keys ATOMS) next-value))]
-          (if not-atom
+              not-notion   (= -1 (.index-of (keys NOTIONS) next-value))]
+          (if not-notion
             (detected node value)
             (recur step.parent next-value)))))
     false))
 
 (defn- find-derefs
-  " Returns a list of atoms referenced from an atom. "
-  [atom]
+  " Returns a list of notions referenced from a notion. "
+  [notion]
   (cond
-    (= atom.type "Atom")
+    (= notion.type "Notion")
       (let [detective (require "detective")
-            code      atom.compiled.output.code
+            code      notion.compiled.output.code
             results   (detective.find code
                       { :word      ".*"
-                        :isRequire (detect-and-parse-deref.bind nil atom) })]
+                        :isRequire (detect-and-parse-deref.bind nil notion) })]
         (unique results.strings))
-    (= atom.type "AtomDirectory")
+    (= notion.type "NotionDirectory")
       []))
 
 (defn- find-requires
-  [requires atom]
+  [requires notion]
   (cond
-    (= atom.type "Atom")
-      (atom.requires.map (fn [req]
+    (= notion.type "Notion")
+      (notion.requires.map (fn [req]
         (let [resolved
                 (.sync (require "resolve") req
-                  { :basedir    (path.dirname atom.path)
+                  { :basedir    (path.dirname notion.path)
                     :extensions [".js" ".wisp"] })]
           (if (= -1 (requires.index-of resolved))
             (requires.push resolved)))))
-    (= atom.type "AtomDirectory")
+    (= notion.type "NotionDirectory")
       []))
 
 (defn- add-dep
   [deps reqs from to]
   (log.as :add-dep deps.length from.name to)
   (if (= -1 (deps.index-of to))
-    (let [dep (aget ATOMS to)]
+    (let [dep (aget NOTIONS to)]
       (if (not dep) (throw (Error.
-        (str "No atom " to " (from " from.name ")"))))
+        (str "No notion " to " (from " from.name ")"))))
       (deps.push to)
       (find-requires reqs dep)
       (map (fn [to] (add-dep deps reqs dep to)) (find-derefs dep)))))
 
 (defn get-deps
-  " Returns a processed list of the dependencies of an atom. "
-  [atom]
-  (log.as :get-deps atom.path)
+  " Returns a processed list of the dependencies of a notion. "
+  [notion]
+  (log.as :get-deps notion.path)
   (let [reqs []  ;; native library requires
-        deps []] ;; atom dependencies a.k.a. derefs
-    (find-requires reqs atom)
-    (.map (find-derefs atom)
-      (fn [atom-name] (add-dep deps reqs atom atom-name)))
+        deps []] ;; notion dependencies a.k.a. derefs
+    (find-requires reqs notion)
+    (.map (find-derefs notion)
+      (fn [notion-name] (add-dep deps reqs notion notion-name)))
     { :derefs   deps
       :requires reqs }))
 
