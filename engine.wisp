@@ -56,27 +56,31 @@
 ;; loading and reloading
 ;;
 
+;(log (colors.gray "█") (colors.blue (path.basename dir)))
+;(log (colors.gray (if (= i (- files.length 1)) "└──" "├──"))
+;(colors.green (path.basename filename)))
+
+(defn- ignore-files
+  [files]
+  (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
+
+(defn- updated
+  " Emits when an aspect of an atom (source code, compiled code, value)
+    has been updated. "
+  [atom what]
+  (events.emit (str "atom.updated." what) (freeze-atom atom)))
+
 (defn load-atom-directory
   [dir]
   (Q.Promise (fn [resolve reject]
     (glob (path.join dir "*") {} (fn [err files]
       (set! files (ignore-files files))
       (if err (reject err))
-      (do
-        (log (colors.gray "█") (colors.blue (path.basename dir)))
-        (resolve (Q.allSettled (files.map (fn [filename i]
-          (log (colors.gray (if (= i (- files.length 1)) "└──" "├──"))
-               (colors.green (path.basename filename)))
-          (load-atom filename)))))))))))
-
-(defn- ignore-files
-  [files]
-  (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
+      (resolve (Q.allSettled (files.map load-atom))))))))
 
 (defn load-atom
   " Loads an atom from the specified path, and adds it to the watcher. "
   [atom-path i arr]
-  ;(log.as :load-atom atom-path)
   (Q.Promise (fn [resolve reject]
     (let [rel-path (path.relative root-dir atom-path)]
       (fs.read-file atom-path "utf-8" (fn [err src]
@@ -88,16 +92,9 @@
             (updated atom :value)
             (watcher.add atom-path)
             (install-atom resolve atom)))))))))
-            ;(install-atom resolve atom)))))))))
-
-(defn- updated
-  " Emits when an aspect of an atom (source code, compiled code, value)
-    has been updated. "
-  [atom what]
-  (events.emit (str "atom.updated." what) (freeze-atom atom)))
 
 (defn install-atom [resolve atom]
-  (loop [atom-path   atom.path
+  (loop [atom-path   atom.name
          current-dir ATOMS]
     (if (= -1 (atom-path.index-of "/"))
       (do
@@ -106,12 +103,6 @@
       (let [child-dir (-> atom-path (.split "/") (aget 0))]
         (if (not (aget current-dir child-dir)) (aset current-dir child-dir {}))
         (recur (tree.descend-path atom-path) (aget current-dir child-dir))))))
-
-;(defn- install-atom [resolve atom]
-  ;(let [rel-path (path.relative root-dir atom.path)
-        ;atom-key (rel-path.replace (RegExp. "\\." "g") "/")]
-    ;(aset ATOMS atom-key atom)
-    ;(resolve atom)))
 
 (defn reload-atom
   " Reloads an atom's source code from a file.
@@ -180,13 +171,25 @@
     (detective.find atom.compiled.output.code))))
   atom)
 
+(defn- descend-tree [tree path]
+  (loop [current-node   tree
+         path-fragments (path.split "/")]
+
+    ; error checking; TODO throw when trying to descend down a file
+    (if (> path-fragments.length 0)
+      (do
+        (if (= -1 (.index-of (keys current-node) (aget path-fragments 0)))
+          (throw (Error. (str "No atom at path " path))))
+        (recur
+          (aget current-node (aget path-fragments 0))
+          (path-fragments.slice 1)))
+      current-node)))
+
 (defn run-atom
   " Promises to evaluate an atom, if it exists. "
-  [name]
+  [atom-path]
   (Q.Promise (fn [resolve reject]
-    (if (= -1 (.index-of (keys ATOMS) name))
-      (reject (str "No atom " name)))
-    (resolve (evaluate-atom (aget ATOMS name))))))
+    (resolve (evaluate-atom (descend-tree ATOMS atom-path))))))
 
 (defn evaluate-atom
   " Promises to evaluate an atom. "
