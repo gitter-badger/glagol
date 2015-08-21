@@ -27,7 +27,6 @@
     (detective.find notion.compiled.output.code))))
   notion)
 
-
 (defn evaluate-notion
   " Promises to evaluate a notion. "
   [notion]
@@ -96,6 +95,7 @@
   " Hacks detective module to find `_.<notion-name>`
     expressions (as compiled from `./<notion-name>` in wisp). "
   [notion node]
+  (log.as :detect-and-parse-deref notion node)
   (set! node.arguments (or node.arguments []))
   (if (and (= node.type "MemberExpression")
            (= node.object.type "Identifier")

@@ -1,4 +1,5 @@
 (def ^:private compiler (require "./compile"))
+(def ^:private fs       (require "fs"))
 (def ^:private glob     (require "glob"))
 (def ^:private is-equal (.-is-equal (require "wisp/runtime")))
 (def ^:private notion   (require "./notion"))
@@ -6,10 +7,10 @@
 (def ^:private Q        (require "q"))
 
 (defn make-notion-directory
-  " Creates a new NotionDirectory - a structure corresponding 
-    to a filesystem directory and containing references to its
-    contained Notions, as well as corresponding parent NotionDirectory,
-    thus offering a view into the whole notion tree."
+  " Creates a new NotionDirectory - a structure which corresponds
+    to a filesystem directory and contains Notion references to its
+    contents; as well as to the corresponding parent NotionDirectory,
+    thus offering a view into the whole notion tree. "
   [notion-path]
   (log.as :make-notion notion-path "<DIR>")
   { :type "NotionDirectory"
@@ -22,7 +23,13 @@
     (glob (path.join dir "*") {} (fn [err files]
       (set! files (ignore-files files))
       (if err (reject err))
-      (resolve (Q.allSettled (files.map notion.load-notion))))))))
+      (resolve (Q.allSettled (files.map (fn [file]
+        (Q.Promise (fn [resolve reject]
+          (fs.stat file (fn [err stats]
+            (if err (reject err)
+              (resolve (if (stats.is-directory)
+                (load-notion-directory file)
+                (notion.load-notion file)) )))))))))))))))
 
 (defn freeze-notion-directory
   " Returns a static snapshot of all loaded notions. "

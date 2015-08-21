@@ -3,9 +3,7 @@
 
 (def ^:private colors    (require "colors/safe"))
 (def ^:private detective (require "detective"))
-(def ^:private fs        (require "fs"))
 (def ^:private logging   (require "etude-logging"))
-(def ^:private observ    (require "observ"))
 (def ^:private resolve   (require "resolve"))
 (def ^:private runtime   (require "./runtime.js"))
 (def ^:private url       (require "url"))
@@ -35,6 +33,8 @@
         ;; TODO these here too
         ;; (updated notion :value)
         ;; (watcher.add notion-path)
+        ;; emit event on value update
+        ;; (notion.value (updated.bind nil notion :value))
         (set! state.tree notions)
         (log.as :loaded-notion-tree notions)
         state)))))

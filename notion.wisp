@@ -1,5 +1,7 @@
-(def ^:private path (require "path"))
-(def ^:private Q    (require "q"))
+(def ^:private fs     (require "fs"))
+(def ^:private observ (require "observ"))
+(def ^:private path   (require "path"))
+(def ^:private Q      (require "q"))
 
 (defn make-notion
   " Creates a new Notion - an atom-type structure
@@ -10,34 +12,23 @@
     Passing a preloaded source is optional. "
   [notion-path source]
   (log.as :make-notion notion-path source)
-  (let [notion
-          { :type      "Notion"
-            :path      (path.resolve root-dir notion-path)
-            :name      notion-path
-            :source    (observ (.trim (or source "")))
-            :compiled  nil
-            :requires  []
-            :value     (observ undefined)
-            :evaluated false
-            :outdated  false }]
-
-    ; emit event on value update
-    (notion.value (updated.bind nil notion :value))
-
-    notion))
+  { :type      "Notion"
+    :path      notion-path
+    :name      (path.basename notion-path)
+    :source    (observ (.trim (or source "")))
+    :compiled  nil
+    :requires  []
+    :value     (observ undefined)
+    :evaluated false
+    :outdated  false })
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
-  [notion-path i arr]
+  [notion-path]
+  (log.as :load-notion notion-path)
   (Q.Promise (fn [resolve reject]
-    (let [rel-path (path.relative root-dir notion-path)]
-      (fs.read-file notion-path "utf-8" (fn [err src]
-        (if err
-          (if (= err.code "EISDIR")
-            (resolve (load-notion-directory notion-path))
-            (do (log err) (reject err)))
-          (let [notion (make-notion rel-path src)]
-            (install-notion resolve notion)))))))))
+    (fs.read-file notion-path "utf-8" (fn [err src]
+      (if err (reject err) (resolve (make-notion notion-path src))))))))
 
 (defn freeze-notion
   " Returns a static snapshot of a single notion. "
@@ -45,9 +36,9 @@
   (cond
     (= notion.type "Notion")
       (let [frozen
-              { :name     notion.name
-                :type     "Notion"
-                :path     (path.relative root-dir notion.path)
+              { :type     "Notion"
+                :name     notion.name
+                :path     notion.path
                 :source   (notion.source)
                 :compiled notion.compiled.output.code }]
         (if notion.evaluated (set! frozen.value (notion.value)))
@@ -62,7 +53,7 @@
   [notion-path file-stat]
   (fs.read-file notion-path "utf-8" (fn [err src]
     (if err (do (log err) (throw err)))
-    (let [rel-path  (path.relative root-dir notion-path)
+    (let [rel-path    (path.relative root-dir notion-path)
           notion-name (translate rel-path)
           notion      (aget NOTIONS notion-name)]
       (if (not (= src (notion.source))) (notion.source.set src))))))
