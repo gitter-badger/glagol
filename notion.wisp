@@ -1,4 +1,5 @@
-(def ^:private Q (require "q"))
+(def ^:private path (require "path"))
+(def ^:private Q    (require "q"))
 
 (defn make-notion
   " Creates a new Notion - an atom-type structure
@@ -8,6 +9,7 @@
 
     Passing a preloaded source is optional. "
   [notion-path source]
+  (log.as :make-notion notion-path source)
   (let [notion
           { :type      "Notion"
             :path      (path.resolve root-dir notion-path)

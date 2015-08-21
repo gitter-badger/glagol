@@ -6,7 +6,7 @@
 
 (defn compile-notion-initial
   " Called by engine after initial load of each notion. "
-  [])
+  []
     ; compile source now and on update
     (compile-notion-sync notion)
     (notion.source (fn []
@@ -17,7 +17,7 @@
           (updated notion :compiled)
           (if notion.evaluated (do
             (set! notion.outdated true)
-            (evaluate-notion-sync notion))))))))
+            (evaluate-notion-sync notion)))))))))
 
 (defn compile-notion-sync
   " Compiles a notion's source code and determines its dependencies. "
