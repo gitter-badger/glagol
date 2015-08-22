@@ -11,11 +11,11 @@
     to a filesystem directory and contains Notion references to its
     contents; as well as to the corresponding parent NotionDirectory,
     thus offering a view into the whole notion tree. "
-  [notion-path]
-  (log.as :make-notion notion-path "<DIR>")
+  [dir notions]
   { :type "NotionDirectory"
-    :name notion-path
-    :path (path.resolve root-dir notion-path) })
+    :name (path.basename dir)
+    :path dir
+    :notions (or notions [])})
 
 (defn load-notion-directory
   [dir]
@@ -23,13 +23,16 @@
     (glob (path.join dir "*") {} (fn [err files]
       (set! files (ignore-files files))
       (if err (reject err))
-      (resolve (Q.allSettled (files.map (fn [file]
+      (.then (Q.allSettled (files.map (fn [file]
         (Q.Promise (fn [resolve reject]
           (fs.stat file (fn [err stats]
             (if err (reject err)
               (resolve (if (stats.is-directory)
                 (load-notion-directory file)
-                (notion.load-notion file)) )))))))))))))))
+                (notion.load-notion file)) )))))))))
+        (fn [results]
+          (resolve (make-notion-directory dir
+            (results.map #(.-value %1)))))))))))
 
 (defn freeze-notion-directory
   " Returns a static snapshot of all loaded notions. "
