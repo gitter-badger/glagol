@@ -1,3 +1,11 @@
+(def ^:private colors    (require "colors/safe"))
+(def ^:private detective (require "detective"))
+(def ^:private logging   (require "etude-logging"))
+(def ^:private path      (require "path"))
+(def ^:private runtime   (require "./runtime"))
+(def ^:private tree      (require "./tree"))
+(def ^:private vm        (require "vm"))
+
 (defn- updated
   " Emits when an aspect of a notion (source code, compiled code, value)
     has been updated. "
@@ -36,11 +44,10 @@
 
 (defn make-notion-context [notion]
   " Prepares an execution context with globals used by notions. "
-  (let [context-name (path.resolve root-dir notion.name)
-        context      (runtime.make-context context-name)]
+  (let [context (runtime.make-context notion.path)]
     ; can't use assoc because the resulting object is uncontextified
     (set! context.log (logging/get-logger (str (colors.bold "@") notion.name)))
-    (set! context._   (tree.get-notion-tree NOTIONS notion))
+    (set! context._   {}); (tree.get-notion-tree NOTIONS notion))
     context))
 
 (defn evaluate-notion-sync

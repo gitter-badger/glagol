@@ -47,9 +47,12 @@ if (process.argv.length <= 2) {
   engine.start(rootDir).then(function (state) {
     console.log("Engine state after start:", state);
     if (entryFile) {
-      engine.tree.runNotion(
-        engine.notion.translate(path.relative(rootDir, entryFile)).replace('.', '/')
-      ).then(function (result) { console.log("Started.") }).done();
+      var entryPoint =
+        engine.tree.descend(state.tree, path.relative(rootDir, entryFile));
+      console.log("Entry point:", entryPoint);
+      engine.compile.evaluateNotionSync(entryPoint).then(function (notion) {
+        console.log("Evaluated:", notion);
+      })
     }
   }).done();
 

@@ -2,15 +2,15 @@
 (set! Q.longStackSupport true)
 
 (def ^:private colors    (require "colors/safe"))
-(def ^:private detective (require "detective"))
 (def ^:private logging   (require "etude-logging"))
 (def ^:private resolve   (require "resolve"))
-(def ^:private runtime   (require "./runtime.js"))
 (def ^:private url       (require "url"))
 (def ^:private vm        (require "vm"))
 
-(def notion (require "./notion.wisp"))
-(def tree   (require "./tree.wisp"))
+(def compile (require "./compile.wisp"))
+(def notion  (require "./notion.wisp"))
+(def runtime (require "./runtime.js"))
+(def tree    (require "./tree.wisp"))
 
 (def ^:private = runtime.wisp.runtime.is-equal)
 
