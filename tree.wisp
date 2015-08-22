@@ -11,11 +11,14 @@
     to a filesystem directory and contains Notion references to its
     contents; as well as to the corresponding parent NotionDirectory,
     thus offering a view into the whole notion tree. "
-  [dir notions]
-  { :type "NotionDirectory"
-    :name (path.basename dir)
-    :path dir
-    :notions (or notions [])})
+  [dir notion-list]
+  (let [notions {}]
+    (notion-list.map (fn [notion]
+      (aset notions notion.name notion)))
+    { :type "NotionDirectory"
+      :name (path.basename dir)
+      :path dir
+      :notions notions}))
 
 (defn load-notion-directory
   [dir]
@@ -101,5 +104,6 @@
 (defn run-notion
   " Promises to evaluate a notion, if it exists. "
   [notion-path]
+  (log.as :run-notion notion-path)
   (Q.Promise (fn [resolve reject]
     (resolve (compiler.evaluate-notion (descend-tree NOTIONS notion-path))))))
