@@ -22,8 +22,6 @@
   (let [engine-state
     { :root    dir
       :tree    {}
-      :events  (new (.-EventEmitter2 (require "eventemitter2"))
-                 { :maxListeners 32 :wildcard true })
       :watcher { :add (fn []) :on (fn []) } }]
     ;(if (not process.browser)
         ;(let [chokidar (require "chokidar")]

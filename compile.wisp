@@ -13,7 +13,7 @@
   [notion what]
   (events.emit (str "notion.updated." what) (freeze-notion notion)))
 
-(defn compile-notion-initial
+(defn autocompile-on
   " Called by engine after initial load of each notion. "
   []
     ; compile source now and on update
@@ -114,7 +114,7 @@
       (if (not (and step (= step.type "MemberExpression")))
         (detected node value)
         (let [next-value (conj value "/" step.property.name)
-              not-notion   (= -1 (.index-of (keys NOTIONS) next-value))]
+              not-notion (= -1 (.index-of (keys NOTIONS) next-value))]
           (if not-notion
             (detected node value)
             (recur step.parent next-value)))))
@@ -126,7 +126,9 @@
   (cond
     (= notion.type "Notion")
       (let [detective (require "detective")
-            code      notion.compiled.output.code
+            compiled  (or notion.compiled
+                        (.-compiled (compile-notion-sync notion)))
+            code      compiled.output.code
             results   (detective.find code
                       { :word      ".*"
                         :isRequire (detect-and-parse-deref.bind nil notion) })]

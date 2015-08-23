@@ -11,7 +11,6 @@
 
     Passing a preloaded source is optional. "
   [notion-path source]
-  (log.as :make-notion notion-path source)
   { :type      "Notion"
     :path      notion-path
     :name      (path.basename notion-path)

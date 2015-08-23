@@ -117,7 +117,6 @@
         first-token   (aget relative-path 0)
         err           (fn [& args] (throw (Error. (apply str args))))
         cwd           nil]
-    (log 1)
 
     ; doesn't work with parentless notions
     (if (not self.parent)
