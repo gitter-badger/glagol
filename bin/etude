@@ -50,9 +50,8 @@ if (process.argv.length <= 2) {
       var entryPoint =
         engine.tree.descend(state.tree, path.relative(rootDir, entryFile));
       console.log("Entry point:", entryPoint);
-      engine.compile.evaluateNotionSync(entryPoint).then(function (notion) {
-        console.log("Evaluated:", notion);
-      })
+      var evaluated = engine.compile.evaluateNotionSync(entryPoint);
+      console.log("Evaluated:", evaluated);
     }
   }).done();
 

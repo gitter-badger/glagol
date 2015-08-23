@@ -19,7 +19,7 @@
 (defn start
   " Starts up the engine in a specified root directory. "
   [dir]
-  (let [state
+  (let [engine-state
     { :root    dir
       :tree    {}
       :events  (new (.-EventEmitter2 (require "eventemitter2"))
@@ -35,6 +35,6 @@
         ;; (watcher.add notion-path)
         ;; emit event on value update
         ;; (notion.value (updated.bind nil notion :value))
-        (set! state.tree notions)
+        (set! engine-state.tree notions)
         (log.as :loaded-notion-tree notions)
-        state)))))
+        engine-state)))))

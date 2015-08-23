@@ -12,13 +12,15 @@
     contents; as well as to the corresponding parent NotionDirectory,
     thus offering a view into the whole notion tree. "
   [dir notion-list]
-  (let [notions {}]
+  (let [notions    {}
+        notion-dir { :type    "NotionDirectory"
+                     :name    (path.basename dir)
+                     :path    dir
+                     :notions notions }]
     (notion-list.map (fn [notion]
+      (set! notion.parent notion-dir)
       (aset notions notion.name notion)))
-    { :type "NotionDirectory"
-      :name (path.basename dir)
-      :path dir
-      :notions notions}))
+    notion-dir))
 
 (defn load-notion-directory
   [dir]
@@ -107,3 +109,50 @@
   ;(log.as :run-notion notion-path)
   ;(Q.Promise (fn [resolve reject]
    ;$(resolve (compiler.evaluate-notion (descend-tree NOTIONS notion-path))))))
+
+(defn get-notion-by-path [self relative-path]
+  ; TODO
+  (log.as :get-notion-by-path (keys self) self.name relative-path)
+  (let [relative-path (relative-path.split "/")
+        first-token   (aget relative-path 0)
+        err           (fn [& args] (throw (Error. (apply str args))))
+        cwd           nil]
+    (log 1)
+
+    ; doesn't work with parentless notions
+    (if (not self.parent)
+      (err "Notion " self.name " has no parent set."))
+
+    ; special case first token
+    (cond
+      (= first-token ".")
+        (set! cwd self.parent)
+      (= first-token "..")
+        (if (not self.parent.parent)
+          (err "Notion " self.parent.name
+            " (parent of " self.name ") has no parent set.")
+          (set! cwd self.parent.parent))
+      :else
+        (err first-token "is not a valid first token for "
+          "notion path " notion-path " (from " self.name ")"))
+
+    ; descend rest of path
+    (loop [n    cwd
+           tail (relative-path.slice 1)]
+      (let [next-path-token (aget tail 0)
+            err (err.bind nil next-path-token " (from " relative-path ") ")]
+        (if (not next-path-token)
+          n ; if there's no more to the path, return this
+          ; otherwise, y'know, recurse one directory down
+          (cond ; error handling
+            (or (not n) (not (= n.type "NotionDirectory")))
+              (err "is not a NotionDirectory")
+            (not n.notions)
+              (err "has no child notion list")
+            :else
+              (recur
+                (aget n.notions (aget tail 0)) (tail.slice 1))))))))
+
+(defn get-notion-tree [notion]
+  ; TODO
+)

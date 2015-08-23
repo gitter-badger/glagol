@@ -20,7 +20,8 @@
     :requires  []
     :value     (observ undefined)
     :evaluated false
-    :outdated  false })
+    :outdated  false 
+    :parent    nil })
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "

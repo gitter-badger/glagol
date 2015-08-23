@@ -4,6 +4,7 @@
 (def ^:private path      (require "path"))
 (def ^:private runtime   (require "./runtime"))
 (def ^:private tree      (require "./tree"))
+(def ^:private util      (require "./util"))
 (def ^:private vm        (require "vm"))
 
 (defn- updated
@@ -31,7 +32,7 @@
   " Compiles a notion's source code and determines its dependencies. "
   [notion]
   (set! notion.compiled (runtime.compile-source (notion.source) notion.name))
-  (set! notion.requires (unique (.-strings
+  (set! notion.requires (util.unique (.-strings
     (detective.find notion.compiled.output.code))))
   notion)
 
@@ -46,8 +47,9 @@
   " Prepares an execution context with globals used by notions. "
   (let [context (runtime.make-context notion.path)]
     ; can't use assoc because the resulting object is uncontextified
-    (set! context.log (logging/get-logger (str (colors.bold "@") notion.name)))
-    (set! context._   {}); (tree.get-notion-tree NOTIONS notion))
+    (set! context.log  (logging/get-logger (str (colors.bold "@") notion.name)))
+    (set! context.self notion)
+    (set! context._    {}); (tree.get-notion-tree NOTIONS notion))
     context))
 
 (defn evaluate-notion-sync
@@ -169,17 +171,3 @@
     { :derefs   deps
       :requires reqs }))
 
-;;
-;; utilities
-;;
-
-(defn unique
-  " Filters an array into a set of unique elements. "
-  [arr]
-  (let [encountered []]
-    (arr.filter (fn [item]
-      (if (= -1 (encountered.index-of item))
-        (do
-          (encountered.push item)
-          true)
-        false)))))
