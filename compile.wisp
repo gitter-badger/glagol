@@ -92,22 +92,23 @@
 ;; notion interdependency management
 ;;
 
-(defn- detected
-  [node value]
-  (set! node.arguments [{ :type "Literal" :value value }])
-  true)
-
 (defn- step? [node]
   (and
     (= node.type "MemberExpression")
     (= node.object.type "Identifier")
     (or (= node.object.name "_") (= node.object.name "__"))))
 
-(defn- next-notion? [node notion path]
-  (and
-    node.parent
-    (= node.parent.type "MemberExpression")
-    (tree.get-notion-by-path notion path)))
+(defn- get-next-notion [node notion path]
+  (if (and node.parent (= node.parent.type "MemberExpression"))
+    (let [next-notion (tree.get-notion-by-path notion path)]
+      (or next-notion false))))
+
+(defn- detected!
+  [node value]
+  ; replacing the node with a literal in detective's copy of the ast
+  ; allows detective to fish out the end value by itself afterwards
+  (set! node.arguments [{ :type "Literal" :value value }])
+  true)
 
 (defn- detect-and-parse-deref
   " Hacks detective module to find `_.<notion-name>`
@@ -119,9 +120,9 @@
            path (if (= node.object.name "_") "." "..")]
       (let [next-path (conj path "/" step.property.name)]
         (log next-path)
-        (if (next-notion? step notion next-path)
-          (recur step.parent next-path)
-          (detected node next-path))))
+        (let [next-notion (get-next-notion step notion next-path)]
+          (if next-notion (recur step.parent next-path)
+                          (detected! node next-path)))))
     false))
 
 (defn- find-derefs
