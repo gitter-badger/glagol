@@ -119,7 +119,6 @@
 (defn- find-derefs
   " Returns a list of notions referenced from a notion. "
   [notion]
-  (log.as :find-derefs notion.name)
   (cond
     (= notion.type "Notion")
       (let [detective (require "detective")
@@ -152,7 +151,7 @@
   [deps reqs from to]
   (log.as :add-dep to)
   (if (= -1 (deps.index-of to))
-    (let [dep nil];(aget NOTIONS to)]
+    (let [dep (tree.get-notion-by-path from to)]
       (if (not dep) (throw (Error.
         (str "No notion " to " (from " from.name ")"))))
       (deps.push to)
@@ -166,7 +165,6 @@
   (let [reqs []  ;; native library requires
         deps []] ;; notion dependencies a.k.a. derefs
     (find-requires reqs notion)
-    (log.as :deps-are (find-derefs notion))
     (.map (find-derefs notion)
       (fn [notion-name] (add-dep deps reqs notion notion-name)))
     { :derefs   deps
