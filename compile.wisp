@@ -92,39 +92,28 @@
 ;; notion interdependency management
 ;;
 
-(defn- resolve-notion-prefix
-  [from to]
-  (log.as :resolv to)
-  (conj (.join (.slice (from.name.split "/") 0 -1) "/") "/" to))
-
-(defn- detected [node value]
+(defn- detected
+  [node value]
   (set! node.arguments [{ :type "Literal" :value value }])
   true)
+
+(defn- step? [node]
+  (and (= node.type "MemberExpression")
+       (= node.object.type "Identifier")
+       (or (= node.object.name "_") (= node.object.name "__"))))
 
 (defn- detect-and-parse-deref
   " Hacks detective module to find `_.<notion-name>`
     expressions (as compiled from `./<notion-name>` in wisp). "
   [notion node]
   (set! node.arguments (or node.arguments []))
-  (if (and (= node.type "MemberExpression")
-           (= node.object.type "Identifier")
-           (or (= node.object.name "_") (= node.object.name "__")))
-    (loop [step   node.parent
-           value  (conj (if (= node.object.name "_") "." "..")
-                    (resolve-notion-prefix notion node.property.name))]
-      (log.as (str :detect-and-parse-deref-from " " :main)
-        :value  value 
-        :name   node.object.name
-        :notion notion.name)
-      (if (not (and step (= step.type "MemberExpression")))
-        (detected node value)
-        (let [next-value (str (conj value "/" step.property.name))
-              found      (tree.get-notion-by-path notion next-value)
-              $ (log.as :found found)
-              not-notion true]
-          (if not-notion
-            (detected node value)
-            (recur step.parent next-value)))))
+  (if (step? node)
+    (loop [step node
+           path (if (= node.object.name "_") "." "..")]
+      (let [next-path (conj path "/" step.property.name)]
+        (if (and step.parent (= step.parent.type "MemberExpression"))
+          (recur step.parent next-path)
+          (detected node next-path))))
     false))
 
 (defn- find-derefs
