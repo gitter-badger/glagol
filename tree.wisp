@@ -139,7 +139,7 @@
                       (= first-token "..") self.parent.parent)
            tail (split-path.slice 1)]
       (let [next-path-token (aget tail 0)
-            err (fn [] (throw))]
+            err (fn [& args] (throw (Error. (apply str n.name " " args))))]
         (if (not next-path-token)
           n ; if there's no more to the path, return this
           ; otherwise, y'know, recurse one directory down
