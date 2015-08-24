@@ -57,28 +57,6 @@
   [files]
   (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
 
-;(defn install-notion
-  ;[notion-collection evaluate-notion tree-root full-path]
-  ;(loop [notion-path   full-path
-         ;current-dir tree-root]
-    ;(if (= -1 (notion-path.index-of "/"))
-      ;(add-notion evaluate-notion current-dir notion-path
-        ;(aget notion-collection full-path))
-      ;(let [child-dir (-> notion-path (.split "/") (aget 0))]
-        ;(if (not (aget current-dir child-dir)) (aset current-dir child-dir {}))
-        ;(recur (descend-path notion-path) (aget current-dir child-dir))))))
-
-;(defn install-notion [resolve notion]
-  ;(loop [notion-path   notion.name
-         ;current-dir NOTIONS]
-    ;(if (= -1 (notion-path.index-of "/"))
-      ;(do
-        ;(add-notion compiler.evaluate-notion current-dir notion-path notion)
-        ;(resolve notion))
-      ;(let [child-dir (-> notion-path (.split "/") (aget 0))]
-        ;(if (not (aget current-dir child-dir)) (aset current-dir child-dir {}))
-        ;(recur (descend-path notion-path) (aget current-dir child-dir))))))
-
 (defn descend-path [path]
   (-> path (.split "/") (.slice 1) (.join "/")))
 
@@ -92,7 +70,6 @@
 (defn descend [tree path]
   (loop [current-node   tree
          path-fragments (path.split "/")]
-
     ; error checking; TODO throw when trying to descend down a file
     (if (> path-fragments.length 0)
       (do
@@ -102,15 +79,6 @@
           (aget current-node.notions (aget path-fragments 0))
           (path-fragments.slice 1)))
       current-node)))
-
-;(defn run-notion
-  ;" Promises to evaluate a notion, if it exists. "
-  ;[notion-path]
-  ;(log.as :run-notion notion-path)
-  ;(Q.Promise (fn [resolve reject]
-   ;$(resolve (compiler.evaluate-notion (descend-tree NOTIONS notion-path))))))
-
-;(defmacro err [& args] (throw (Error. (apply str args))))
 
 (defn get-notion-by-path [self relative-path]
   ; doesn't work with parentless notions
