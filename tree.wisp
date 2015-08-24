@@ -110,36 +110,36 @@
   ;(Q.Promise (fn [resolve reject]
    ;$(resolve (compiler.evaluate-notion (descend-tree NOTIONS notion-path))))))
 
+;(defmacro err [& args] (throw (Error. (apply str args))))
+
 (defn get-notion-by-path [self relative-path]
-  ; TODO
-  (log.as :get-notion-by-path (keys self) self.name relative-path)
-  (let [relative-path (relative-path.split "/")
-        first-token   (aget relative-path 0)
-        err           (fn [& args] (throw (Error. (apply str args))))
-        cwd           nil]
+  ; doesn't work with parentless notions
+  (if (not self.parent)
+    (throw (Error. (str "can't use relative paths (such as " relative-path
+      ") from notion " self.name ", because it has no parent set."))))
 
-    ; doesn't work with parentless notions
-    (if (not self.parent)
-      (err "Notion " self.name " has no parent set."))
+  (let [split-path
+          (relative-path.split "/")
+        first-token
+          (aget split-path 0)]
 
-    ; special case first token
-    (cond
-      (= first-token ".")
-        (set! cwd self.parent)
-      (= first-token "..")
-        (if (not self.parent.parent)
-          (err "Notion " self.parent.name
-            " (parent of " self.name ") has no parent set.")
-          (set! cwd self.parent.parent))
-      :else
-        (err first-token "is not a valid first token for "
-          "notion path " notion-path " (from " self.name ")"))
+    (log.as :get-notion-by-path relative-path split-path)
+    (if (= -1 (.index-of ["." ".."] first-token))
+      (throw (Error. (str
+        (or first-token "<empty string>") " is not a valid first token"
+        " for the notion path " relative-path
+        " (from " self.name ")"))))
+
+    (if (and (= first-token "..") (not self.parent.parent))
+      (throw (Error. (str "can't find a parent for notion "
+        self.parent.name " (which is parent of " self.name ")"))))
 
     ; descend rest of path
-    (loop [n    cwd
-           tail (relative-path.slice 1)]
+    (loop [n    (cond (= first-token ".")  self.parent
+                      (= first-token "..") self.parent.parent)
+           tail (split-path.slice 1)]
       (let [next-path-token (aget tail 0)
-            err (err.bind nil next-path-token " (from " relative-path ") ")]
+            err (fn [] (throw))]
         (if (not next-path-token)
           n ; if there's no more to the path, return this
           ; otherwise, y'know, recurse one directory down

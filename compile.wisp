@@ -94,6 +94,7 @@
 
 (defn- resolve-notion-prefix
   [from to]
+  (log.as :resolv to)
   (conj (.join (.slice (from.name.split "/") 0 -1) "/") "/" to))
 
 (defn- detected [node value]
@@ -104,17 +105,23 @@
   " Hacks detective module to find `_.<notion-name>`
     expressions (as compiled from `./<notion-name>` in wisp). "
   [notion node]
-  (log.as :detect-and-parse-deref notion node)
   (set! node.arguments (or node.arguments []))
   (if (and (= node.type "MemberExpression")
            (= node.object.type "Identifier")
-           (= node.object.name "_"))
-    (loop [step  node.parent
-           value (resolve-notion-prefix notion node.property.name)]
+           (or (= node.object.name "_") (= node.object.name "__")))
+    (loop [step   node.parent
+           value  (conj (if (= node.object.name "_") "." "..")
+                    (resolve-notion-prefix notion node.property.name))]
+      (log.as (str :detect-and-parse-deref-from " " :main)
+        :value  value 
+        :name   node.object.name
+        :notion notion.name)
       (if (not (and step (= step.type "MemberExpression")))
         (detected node value)
-        (let [next-value (conj value "/" step.property.name)
-              not-notion (= -1 (.index-of (keys NOTIONS) next-value))]
+        (let [next-value (str (conj value "/" step.property.name))
+              found      (tree.get-notion-by-path notion next-value)
+              $ (log.as :found found)
+              not-notion true]
           (if not-notion
             (detected node value)
             (recur step.parent next-value)))))
@@ -123,6 +130,7 @@
 (defn- find-derefs
   " Returns a list of notions referenced from a notion. "
   [notion]
+  (log.as :find-derefs notion.name)
   (cond
     (= notion.type "Notion")
       (let [detective (require "detective")
@@ -132,7 +140,8 @@
             results   (detective.find code
                       { :word      ".*"
                         :isRequire (detect-and-parse-deref.bind nil notion) })]
-        (unique results.strings))
+        (log.as :derefs-of notion.name (util.unique results.strings))
+        (util.unique results.strings))
     (= notion.type "NotionDirectory")
       []))
 
@@ -152,9 +161,9 @@
 
 (defn- add-dep
   [deps reqs from to]
-  (log.as :add-dep deps.length from.name to)
+  (log.as :add-dep to)
   (if (= -1 (deps.index-of to))
-    (let [dep (aget NOTIONS to)]
+    (let [dep nil];(aget NOTIONS to)]
       (if (not dep) (throw (Error.
         (str "No notion " to " (from " from.name ")"))))
       (deps.push to)
@@ -168,6 +177,7 @@
   (let [reqs []  ;; native library requires
         deps []] ;; notion dependencies a.k.a. derefs
     (find-requires reqs notion)
+    (log.as :deps-are (find-derefs notion))
     (.map (find-derefs notion)
       (fn [notion-name] (add-dep deps reqs notion notion-name)))
     { :derefs   deps

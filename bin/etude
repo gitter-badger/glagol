@@ -45,13 +45,13 @@ if (process.argv.length <= 2) {
   }
 
   engine.start(rootDir).then(function (state) {
-    console.log("Engine state after start:", state);
+    //console.log("Engine state after start:", state);
     if (entryFile) {
       var entryPoint =
         engine.tree.descend(state.tree, path.relative(rootDir, entryFile));
-      console.log("Entry point:", entryPoint);
+      //console.log("Entry point:", entryPoint);
       var evaluated = engine.compile.evaluateNotionSync(entryPoint);
-      console.log("Evaluated:", evaluated);
+      //console.log("Evaluated:", evaluated);
     }
   }).done();
 

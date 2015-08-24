@@ -71,6 +71,7 @@ function compileSource (source, filename, raw) {
 
   var processed = wisp.compiler.analyzeForms(forms)
   if (processed.error) {
+    console.log("->", processed.error.line, processed.error.column)
     throw new Error("Compile error in " + filename + ": " + processed.error);
   }
 
