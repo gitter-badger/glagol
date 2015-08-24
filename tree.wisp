@@ -113,7 +113,7 @@
           ; otherwise, y'know, recurse one directory down
           (cond ; error handling
             (or (not n) (not (= n.type "NotionDirectory")))
-              (err "is not a NotionDirectory")
+              n
             (not n.notions)
               (err "has no child notion list")
             :else

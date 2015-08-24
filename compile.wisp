@@ -98,9 +98,16 @@
   true)
 
 (defn- step? [node]
-  (and (= node.type "MemberExpression")
-       (= node.object.type "Identifier")
-       (or (= node.object.name "_") (= node.object.name "__"))))
+  (and
+    (= node.type "MemberExpression")
+    (= node.object.type "Identifier")
+    (or (= node.object.name "_") (= node.object.name "__"))))
+
+(defn- next-notion? [node notion path]
+  (and
+    node.parent
+    (= node.parent.type "MemberExpression")
+    (tree.get-notion-by-path notion path)))
 
 (defn- detect-and-parse-deref
   " Hacks detective module to find `_.<notion-name>`
@@ -111,7 +118,8 @@
     (loop [step node
            path (if (= node.object.name "_") "." "..")]
       (let [next-path (conj path "/" step.property.name)]
-        (if (and step.parent (= step.parent.type "MemberExpression"))
+        (log next-path)
+        (if (next-notion? step notion next-path)
           (recur step.parent next-path)
           (detected node next-path))))
     false))
@@ -149,6 +157,7 @@
 
 (defn- add-dep
   [deps reqs from to]
+  (log.as :add-dep from.name to)
   (if (= -1 (deps.index-of to))
     (let [dep (tree.get-notion-by-path from to)]
       (if (not dep) (throw (Error.
