@@ -123,7 +123,7 @@
         first-token
           (aget split-path 0)]
 
-    (log.as :get-notion-by-path relative-path split-path)
+    (log.as :get-notion-by-path relative-path)
     (if (= -1 (.index-of ["." ".."] first-token))
       (throw (Error. (str
         (or first-token "<empty string>") " is not a valid first token"

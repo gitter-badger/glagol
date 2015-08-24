@@ -149,7 +149,6 @@
 
 (defn- add-dep
   [deps reqs from to]
-  (log.as :add-dep to)
   (if (= -1 (deps.index-of to))
     (let [dep (tree.get-notion-by-path from to)]
       (if (not dep) (throw (Error.
