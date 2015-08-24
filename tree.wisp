@@ -123,3 +123,15 @@
 (defn get-notion-tree [notion]
   ; TODO
 )
+
+(defn get-root [notion]
+  (loop [n notion]
+    (if n.parent (recur n.parent)
+      n)))
+
+(defn get-path [notion]
+  (loop [n notion
+         p ""]
+    (if n.parent
+      (recur n.parent (conj n.name "/" p))
+      (conj "/" p))))

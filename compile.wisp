@@ -158,14 +158,16 @@
 
 (defn- add-dep
   [deps reqs from to]
-  (log.as :add-dep from.name to)
-  (if (= -1 (deps.index-of to))
-    (let [dep (tree.get-notion-by-path from to)]
-      (if (not dep) (throw (Error.
-        (str "No notion " to " (from " from.name ")"))))
-      (deps.push to)
-      (find-requires reqs dep)
-      (map (fn [to] (add-dep deps reqs dep to)) (find-derefs dep)))))
+  (let [full-from (tree.get-path from)
+        full-to   (path.resolve full-from to)]
+    (log.as :add-dep full-from full-to)
+    (if (= -1 (deps.index-of full-to))
+      (let [dep (tree.get-notion-by-path from to)]
+        (if (not dep) (throw (Error.
+          (str "No notion " to " (from " from.name ")"))))
+        (deps.push full-to)
+        (find-requires reqs dep)
+        (map (fn [to] (add-dep deps reqs dep to)) (find-derefs dep))))))
 
 (defn get-deps
   " Returns a processed list of the dependencies of a notion. "
