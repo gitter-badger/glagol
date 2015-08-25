@@ -2,9 +2,9 @@
 (def ^:private detective (require "detective"))
 (def ^:private logging   (require "etude-logging"))
 (def ^:private path      (require "path"))
-(def ^:private runtime   (require "./runtime"))
-(def ^:private tree      (require "./tree"))
-(def ^:private util      (require "./util"))
+(def ^:private runtime   (require "./runtime.js"))
+(def ^:private tree      (require "./tree.wisp"))
+(def ^:private util      (require "./util.wisp"))
 (def ^:private vm        (require "vm"))
 
 (defn- updated

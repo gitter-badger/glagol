@@ -2,7 +2,7 @@
 (def ^:private fs       (require "fs"))
 (def ^:private glob     (require "glob"))
 (def ^:private is-equal (.-is-equal (require "wisp/runtime")))
-(def ^:private notion   (require "./notion"))
+(def ^:private notion   (require "./notion.wisp"))
 (def ^:private path     (require "path"))
 (def ^:private Q        (require "q"))
 
