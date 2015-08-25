@@ -6,6 +6,8 @@
 (def ^:private path     (require "path"))
 (def ^:private Q        (require "q"))
 
+;;; directory constructor, loader, and serializer
+
 (defn make-notion-directory
   " Creates a new NotionDirectory - a structure which corresponds
     to a filesystem directory and contains Notion references to its
@@ -57,15 +59,8 @@
   [files]
   (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
 
-(defn descend-path [path]
-  (-> path (.split "/") (.slice 1) (.join "/")))
 
-(defn add-notion [evaluate-notion current-dir notion-name notion]
-  (aset current-dir notion-name notion))
-
-(defn get-notion-tree [notion-collection notion]
-  (log.as :get-notion-tree notion.name)
-  {})
+;;; directory navigation
 
 (defn descend [tree path]
   (loop [current-node   tree
@@ -80,22 +75,23 @@
           (path-fragments.slice 1)))
       current-node)))
 
-(defn get-notion-by-path [self relative-path]
+(defn get-notion-by-path [self target-path]
   ; doesn't work with parentless notions
   (if (not self.parent)
-    (throw (Error. (str "can't use relative paths (such as " relative-path
+    (throw (Error. (str "can't use relative paths (such as " target-path
       ") from notion " self.name ", because it has no parent set."))))
 
   (let [split-path
-          (relative-path.split "/")
+          (target-path.split "/")
         first-token
           (aget split-path 0)]
 
-    (log.as :get-notion-by-path relative-path)
-    (if (= -1 (.index-of ["." ".."] first-token))
+    (log.as :get-notion-by-path self.path target-path)
+
+    (if (= -1 (.index-of ["" "." ".."] first-token))
       (throw (Error. (str
-        (or first-token "<empty string>") " is not a valid first token"
-        " for the notion path " relative-path
+        first-token " is not a valid first token"
+        " for the notion path " target-path
         " (from " self.name ")"))))
 
     (if (and (= first-token "..") (not self.parent.parent))
@@ -103,7 +99,8 @@
         self.parent.name " (which is parent of " self.name ")"))))
 
     ; descend rest of path
-    (loop [n    (cond (= first-token ".")  self.parent
+    (loop [n    (cond (= first-token "")   (get-root self)
+                      (= first-token ".")  self.parent
                       (= first-token "..") self.parent.parent)
            tail (split-path.slice 1)]
       (let [next-path-token (aget tail 0)
@@ -119,10 +116,6 @@
             :else
               (recur
                 (aget n.notions (aget tail 0)) (tail.slice 1))))))))
-
-(defn get-notion-tree [notion]
-  ; TODO
-)
 
 (defn get-root [notion]
   (loop [n notion]
