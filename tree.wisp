@@ -75,6 +75,18 @@
           (path-fragments.slice 1)))
       current-node)))
 
+(defn get-root [notion]
+  (loop [n notion]
+    (if n.parent (recur n.parent)
+      n)))
+
+(defn get-path [notion]
+  (loop [n notion
+         p ""]
+    (if n.parent
+      (recur n.parent (conj n.name "/" p))
+      (conj "/" p))))
+
 (defn get-notion-by-path [self target-path]
   ; doesn't work with parentless notions
   (if (not self.parent)
@@ -99,7 +111,7 @@
         self.parent.name " (which is parent of " self.name ")"))))
 
     ; descend rest of path
-    (loop [n    (cond (= first-token "")   (get-root self)
+    (loop [n    (cond (= first-token "")  (get-root self)
                       (= first-token ".")  self.parent
                       (= first-token "..") self.parent.parent)
            tail (split-path.slice 1)]
@@ -109,22 +121,6 @@
           n ; if there's no more to the path, return this
           ; otherwise, y'know, recurse one directory down
           (cond ; error handling
-            (or (not n) (not (= n.type "NotionDirectory")))
-              n
-            (not n.notions)
-              (err "has no child notion list")
-            :else
-              (recur
-                (aget n.notions (aget tail 0)) (tail.slice 1))))))))
-
-(defn get-root [notion]
-  (loop [n notion]
-    (if n.parent (recur n.parent)
-      n)))
-
-(defn get-path [notion]
-  (loop [n notion
-         p ""]
-    (if n.parent
-      (recur n.parent (conj n.name "/" p))
-      (conj "/" p))))
+            (or (not n) (not (= n.type "NotionDirectory"))) n
+            (not n.notions) (err "has no child notion list")
+            :else (recur (aget n.notions (aget tail 0)) (tail.slice 1))))))))
