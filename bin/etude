@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
-var fs      = require('fs')
-  , path    = require('path')
-  , runtime = require('../runtime.js')
-  , engine  = runtime.requireWisp('../engine.wisp');
+var chokidar = require('chokidar')
+  , fs       = require('fs')
+  , path     = require('path')
+  , runtime  = require('../runtime.js')
+  , engine   = runtime.requireWisp('../engine.wisp');
+
+require('keypress')(process.stdin);
 
 if (process.argv.length <= 2) {
 
@@ -45,13 +48,17 @@ if (process.argv.length <= 2) {
   }
 
   engine.start(rootDir).then(function (state) {
-    //console.log("Engine state after start:", state);
     if (entryFile) {
-      var entryPoint =
-        engine.tree.descend(state.tree, path.relative(rootDir, entryFile));
-      //console.log("Entry point:", entryPoint);
-      var evaluated = engine.compile.evaluateNotionSync(entryPoint);
-      //console.log("Evaluated:", evaluated);
+      var entryPoint = engine.compile.evaluateNotionSync(
+        engine.tree.descend(state.tree, path.relative(rootDir, entryFile)));
+
+      var watcher = chokidar.watch(entryFile, { persistent: true });
+
+      watcher.on('change', function (path) {
+        if (entryPoint.value().undo) entryPoint.value().undo();
+        entryPoint.outdated = true;
+        engine.compile.evaluateNotionSync(entryPoint);
+      });
     }
   }).done();
 

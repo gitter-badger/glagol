@@ -119,7 +119,9 @@ function makeContext (filename, elevated) {
     , __filename:   filename
     , log:          logging.getLogger(path.basename(filename))
     , use:          requireWisp
-    , process:      { cwd: process.cwd() }
+    , process:      { cwd:   process.cwd()
+                    , stdin: process.stdin
+                    , exit:  process.exit }
     , isInstanceOf: function (type, obj) { return obj instanceof type }
     , require:      _require };
 

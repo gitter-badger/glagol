@@ -1,5 +1,6 @@
 (def ^:private colors    (require "colors/safe"))
 (def ^:private detective (require "detective"))
+(def ^:private fs        (require "fs"))
 (def ^:private logging   (require "etude-logging"))
 (def ^:private path      (require "path"))
 (def ^:private runtime   (require "./runtime.js"))
@@ -82,11 +83,20 @@
 (defn evaluate-notion-sync
   " Evaluates the notion in a newly created context. "
   [notion]
-
   ; if the notion's value is up to date, there's nothing to do
   (if (and notion.evaluated (not notion.outdated))
     notion
     (do
+      ; if notion has been marked as outdated, reload it from disk
+      ; TODO make the file read async, move it to evaluate-notion,
+      ; and use that in bin/etude -- or implement a more automated
+      ; system altogether, attach watchers to notions, and involve
+      ; load-notion and the whole promise-based zoological garden.
+      (if notion.outdated (do
+        (notion.source.set (fs.read-file-sync notion.path "utf-8"))
+        (set! notion.outdated false)
+        (set! notion.compiled false)))
+
       ; compile notion code if not compiled yet
       (if (not notion.compiled) (compile-notion-sync notion))
 
