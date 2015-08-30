@@ -15,44 +15,52 @@ if (process.argv.length <= 2) {
 
 } else {
 
-  var entryFile = null
+  var entryPointPath = null
     , rootDir;
 
-  if (process.argv.length === 3) {
-    entryFile = path.resolve(process.argv[2]);
-    if (!fs.existsSync(entryFile)) {
-      console.log("\"" + entryFile + "\"", "doesn't seem to exist.");
+  if (process.argv.length === 3) { // <node> <etude> <entry point>
+
+    entryPath = path.resolve(process.argv[2]);
+
+    if (!fs.existsSync(entryPath)) {
+      console.log("\"" + entryPath + "\"", "doesn't seem to exist.");
       process.exit();
     }
-    var stat = fs.statSync(entryFile);
+
+    var stat = fs.statSync(entryPath);
     if (stat.isFile()) {
       rootDir = process.cwd();
       console.log("Assuming root directory:", rootDir);
-      console.log("Loading entry point:", entryFile);
+      console.log("Loading entry point:", entryPath);
+
     } else if (stat.isDirectory()) {
-      console.log("Setting root directory", entryFile);
-      rootDir = entryFile;
-      entryFile = null;
+      console.log("Setting root directory", entryPath);
+      rootDir = entryPath;
+      entryPath = null;
+
     } else {
-      console.log("\"" + entryFile + "\"",
+      console.log("\"" + entryPath + "\"",
         "doesn't seem to be neither a file nor a directory.");
       process.exit();
     }
-  } else {
+
+  } else { // <node> <etude> <working dir> <entry point> <...ignored>
+
     rootDir = path.resolve(process.argv[2]);
-    entryFile = path.resolve(process.argv[3]);
+    entryPath = path.resolve(rootDir, process.argv[3]);
     if (process.argv.length > 4) {
       console.log("The following arguments have been ignored:",
         process.argv.slice(4));
     }
+
   }
 
   engine.start(rootDir).then(function (state) {
-    if (entryFile) {
+    if (entryPath) {
       var entryPoint = engine.compile.evaluateNotionSync(
-        engine.tree.descend(state.tree, path.relative(rootDir, entryFile)));
+        engine.tree.descend(state.tree, path.relative(rootDir, entryPath)));
 
-      var watcher = chokidar.watch(entryFile, { persistent: true });
+      var watcher = chokidar.watch(entryPath, { persistent: true });
 
       watcher.on('change', function (path) {
         if (entryPoint.value().undo) entryPoint.value().undo();
