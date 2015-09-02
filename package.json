@@ -17,6 +17,9 @@
     "keypress": "^0.2.1",
     "observ": "^0.2.0",
     "q": "^1.4.1",
-    "resolve": "^1.1.6"
+    "resolve": "^1.1.6",
+
+    "wisp": "git://github.com/egasimus/wisp.git",
+    "etude-logging": "git://github.com/egasimus/etude-logging"
   }
 }
