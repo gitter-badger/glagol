@@ -110,6 +110,12 @@
         (let [old-value (notion.value)]
           (if (and old-value old-value.destroy) (old-value.destroy)))
 
+        ; prepare source map support
+        (vm.run-in-context
+          (str "require('"
+            (path.resolve (path.join __dirname "node_modules" "source-map-support"))
+            "').install()") context)
+
         ; execute the notion code
         (let [value (vm.run-in-context
                       (runtime.wrap notion.compiled.output.code)

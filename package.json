@@ -18,8 +18,9 @@
     "observ": "^0.2.0",
     "q": "^1.4.1",
     "resolve": "^1.1.6",
+    "source-map-support": "^0.3.2",
 
-    "wisp": "git://github.com/egasimus/wisp.git",
-    "etude-logging": "git://github.com/egasimus/etude-logging"
+    "etude-logging": "git://github.com/egasimus/etude-logging",
+    "wisp": "git://github.com/egasimus/wisp.git"
   }
 }
