@@ -83,33 +83,6 @@
         (if notion.parent (set! cwd.__ (get-notion-tree notion.parent)))))
     cwd))
 
-;(defn get-notion-tree [notion]
-  ;(loop [
-    ;current
-      ;(cond (= notion.type "NotionDirectory") notion
-            ;(= notion.type "Notion") notion.parent)
-    ;notion-tree
-      ;{}
-  ;] (.map (keys current.notions) (fn [n]
-      ;; ignoring notion installed by previous iteration
-      ;(if (= -1 (.index-of (keys notion-tree) n))
-        ;(let [notion (aget current.notions n)]
-          ;(if (not (notion-tree.has-own-property n)) (cond
-            ;(= notion.type "NotionDirectory")
-              ;(aset notion-tree n (get-notion-tree notion))
-            ;(= notion.type "Notion")
-              ;(Object.define-property notion-tree n
-                ;{ :configurable true
-                  ;:enumerable   true
-                  ;:get
-                    ;(fn []
-                      ;(if (or (not notion.evaluated) notion.outdated)
-                        ;(evaluate-notion-sync notion))
-                      ;(notion.value)) })))))))
-    ;(if current.parent
-      ;(recur current.parent (assoc {} current.name notion-tree))
-      ;notion-tree)))
-
 (defn evaluate-notion-sync
   " Evaluates the notion in a newly created context. "
   [notion]
