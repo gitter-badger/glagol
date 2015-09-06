@@ -64,7 +64,7 @@ wisp.expander.installMacro("->", function to () {
 })();
 
 function compileSource (source, filename, raw) {
-  log.as("compiling", filename);
+  //log.as("compiling", filename);
   raw = raw || false;
   var forms     = wisp.compiler.readForms(source, filename)
     , forms     = forms.forms;

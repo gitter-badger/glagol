@@ -30,7 +30,6 @@
     (Q.Promise (fn [resolve reject]
       (if (not (fs.exists-sync dir)) (reject (str dir " does not exist")))
       (glob (path.join dir "*") {} (fn [err files]
-        (log.as :glob dir files)
         (set! files (ignore-files files))
         (if err (reject err))
         (.then (Q.allSettled (files.map (fn [file]

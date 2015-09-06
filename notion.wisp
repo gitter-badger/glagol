@@ -25,7 +25,7 @@
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
   [notion-path]
-  (log.as :load-notion notion-path)
+  ;(log.as :load-notion notion-path)
   (Q.Promise (fn [resolve reject]
     (fs.read-file notion-path "utf-8" (fn [err src]
       (if err (reject err) (resolve (make-notion notion-path src))))))))

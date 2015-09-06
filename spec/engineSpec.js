@@ -49,10 +49,27 @@ describe('a notion directory', function () {
     })
   })
 
-  it('loads its contents', function (done) {
+  function compareNotionTree (notions, contents) {
+    expect(Object.keys(notions).length).toBe(Object.keys(contents).length);
+    Object.keys(contents).map(function (x) {
+      expect(notions[x]).toBeDefined();
+      if (notions[x]) {
+        if (x[0] === 'd') {
+          expect(notions[x].type).toBe('NotionDirectory');
+          compareNotionTree(notions[x].notions, contents[x]);
+        } else if (x[0] === 'n') expect(notions[x].type).toBe('Notion');
+      }
+    });
+  }
+
+  it('recursively loads its contents', function (done) {
     d.then(function (state) {
-      console.log(state.notions);
-      expect(Object.keys(state.notions).length).toBe(4);
+      compareNotionTree(state.notions,
+        { d1: { d11: { n3: null }, d12: { n4: null }, n11: null }
+        , d2: { n21: null }
+        , d3: {}
+        , n1: null
+        , n2: null });
       done();
     })
   })
