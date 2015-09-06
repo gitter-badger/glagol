@@ -27,19 +27,19 @@
               :tree    nil
               :watcher nil }]
       (-> (tree.load-notion-directory dir)
-        (.then (fn [notions]
-          (set! state.tree notions)
+        (.then (fn [root-notion]
+          (set! state.tree root-notion)
           (set! state.watcher (.watch (require "chokidar") ""))
-          (watch-recursive state.watcher notions)
-          (watcher.on :all (fn [] (log.as :watcher arguments)))
-          (if opts.verbose (log.as :loaded-notion-tree notions))
+          (watch-recursive state.watcher root-notion)
+          (if opts.verbose (log.as :loaded-notion-tree root-notion))
           state))))))
 
 (defn watch-recursive [watcher n]
   (cond
     (and (= n.type "Notion") n.path)
-      (do (log 1) (watcher.add n.path))
+      (watcher.add n.path)
     (and (= n.type "NotionDirectory") n.notions)
-      (do (log 2) (.map (keys (or n.notions {})) (fn [n] (watch-recursive watcher n))))
+      (.map (keys (or n.notions {}))
+        (fn [i] (watch-recursive watcher (aget n.notions i))))
     :else
-      (do (log 3) (throw (Error. (str "unknown thing " n " in notion tree"))))))
+      (throw (Error. (str "unknown thing " n " in notion tree")))))
