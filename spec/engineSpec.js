@@ -85,14 +85,6 @@ describe('a notion tree', function () {
   var d;
   beforeEach(function () { d = tree.loadNotionDirectory(root); })
 
-  it('for any directory, _ points to self', function (done) {
-    d.then(function (state) {
-      var t = compile.getNotionTree(state);
-      expect(t._).toBe(t);
-      done();
-    })
-  })
-
   it('for the root directory, __ is undefined', function (done) {
     d.then(function (state) {
       var t = compile.getNotionTree(state);
@@ -110,19 +102,25 @@ describe('a notion tree', function () {
       expect(s(t3.__)).toEqual(s(t2));
       expect(s(t3.__.__)).toEqual(s(t1));
       done();
-
-      function s (x) { return JSON.stringify(Object.keys(x)) }
     })
   })
 
-  //it('root dir has null parent', function (done) {
-    //d.then(function (state) {
-      //var t = compile.getNotionTree(state);
-      //expect(t._).toBe(t);
-      //expect
-      //done();
-    //})
-  //})
+  it('for any directory, _ points to self', function (done) {
+    d.then(function (state) {
+      var t1 = compile.getNotionTree(state);
+      var t2 = compile.getNotionTree(state.notions['d1']);
+      var t3 = compile.getNotionTree(state.notions['d1'].notions['d12']);
+      expect(t1._).toBe(t1)
+      expect(t2._).toBe(t2);
+      expect(t3._).toBe(t3);
+      expect(s(t2.__._)).toEqual(s(t1));
+      expect(s(t3.__._)).toEqual(s(t2));
+      expect(s(t3.__.__._)).toEqual(s(t1));
+      done();
+    })
+  })
+
+  function s (x) { return JSON.stringify(Object.keys(x)) }
 
   var view_from_n121_ =
     { _:  { n121: "Notion"
