@@ -17,20 +17,20 @@
   [notion what]
   (events.emit (str "notion.updated." what) (freeze-notion notion)))
 
-(defn autocompile-on
-  " Called by engine after initial load of each notion. "
-  []
-    ; compile source now and on update
-    (compile-notion-sync notion)
-    (notion.source (fn []
-      (updated notion :source)
-      (let [old-compiled (if notion.compiled notion.compiled.output.code nil)]
-        (compile-notion-sync notion)
-        (if (not (= old-compiled notion.compiled.output.code)) (do
-          (updated notion :compiled)
-          (if notion.evaluated (do
-            (set! notion.outdated true)
-            (evaluate-notion-sync notion)))))))))
+;(defn autocompile-on
+  ;" Called by engine after initial load of each notion. "
+  ;[]
+    ;; compile source now and on update
+    ;(compile-notion-sync notion)
+    ;(notion.source (fn []
+      ;(updated notion :source)
+      ;(let [old-compiled (if notion.compiled notion.compiled.output.code nil)]
+        ;(compile-notion-sync notion)
+        ;(if (not (= old-compiled notion.compiled.output.code)) (do
+          ;(updated notion :compiled)
+          ;(if notion.evaluated (do
+            ;(set! notion.outdated true)
+            ;(evaluate-notion-sync notion)))))))))
 
 (defn compile-notion-sync
   " Compiles a notion's source code and determines its dependencies. "
@@ -87,7 +87,7 @@
   (fn [] (if (or (not n.evaluated) n.outdated) (evaluate-notion-sync n))
          (n.value)))
 
-(defn- add-to-notion-tree [cwd i n]
+(defn- add-to-tree [cwd i n]
   (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
       :get (cond
@@ -107,7 +107,7 @@
         (set! cwd._ cwd)
         (.map (keys notion.notions) (fn [i]
           (let [n (aget notion.notions i)]
-            (add-to-notion-tree cwd i n))))
+            (add-to-tree cwd i n))))
         (if notion.parent (set! cwd.__ (get-notion-tree notion.parent)))))
     cwd))
 

@@ -1,3 +1,4 @@
+(def ^:private ee2    (require "eventemitter2"))
 (def ^:private fs     (require "fs"))
 (def ^:private observ (require "observ"))
 (def ^:private path   (require "path"))
@@ -11,14 +12,17 @@
 
     Passing a preloaded source is optional. "
   [notion-path source-text]
-  (let [notion-path (or notion-path "")
+  (let [events      (ee2.EventEmitter2.)
+        notion-path (or notion-path "")
         source-text (or source-text "")
-        source (observ source-text)
-        value  (observ undefined)
+        source      (observ source-text)
+        compiled    (observ undefined)
+        value       (observ undefined)
         notion
           { :type      "Notion"
             :path      notion-path
             :name      (path.basename notion-path)
+            :events    events
             :source    source
             :compiled  nil
             :requires  []
@@ -26,6 +30,19 @@
             :evaluated false
             :outdated  false 
             :parent    nil }]
+
+    (source   (fn [value] (events.emit "updated"   [notion value])))
+    (compiled (fn [value] (events.emit "compiled"  [notion value])))
+    (value    (fn [value] (events.emit "evaluated" [notion value])))
+
+    ;(Object.define-property notion :source
+      ;{ :configurable true :enumerable true
+        ;:get (fn [] (fn [] (source)) )
+        ;:set (fn [v] (source.set v))})
+    ;(Object.define-property notion :value
+      ;{ :configurable true :enumerable true
+        ;:get (fn [] (fn [] (value)) )
+        ;:set (fn [v] (value.set v))})
     notion))
 
 (defn load-notion
