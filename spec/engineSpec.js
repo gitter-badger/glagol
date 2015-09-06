@@ -68,17 +68,17 @@ describe('a notion', function () {
     var n = notion.makeNotion();
     expect(n.name).toBe('');
     expect(n.path).toBe('');
-    expect(n.source()).toBe('');
+    expect(n.source).toBe('');
   })
 
   it('has empty source if not specified', function () {
     var n = notion.makeNotion('foo/bar-baz');
-    expect(n.source()).toBe('');
+    expect(n.source).toBe('');
   })
 
   it('has source as specified', function () {
     var n = notion.makeNotion('foo/bar-baz', '42');
-    expect(n.source()).toBe('42');
+    expect(n.source).toBe('42');
   })
 
   it('automatically loads its source on request', function () {

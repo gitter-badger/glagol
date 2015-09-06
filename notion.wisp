@@ -15,39 +15,35 @@
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
         source-text (or source-text "")
-        source      (observ source-text)
-        compiled    (observ undefined)
-        value       (observ undefined)
+        observs     { :source (observ) :compiled (observ) :value (observ) }
         notion
           { :type      "Notion"
             :path      notion-path
             :name      (path.basename notion-path)
             :events    events
-            :source    source
-            :compiled  nil
             :requires  []
-            :value     value
             :evaluated false
             :outdated  false 
             :parent    nil }]
 
-    (source   (fn [value] (events.emit "updated"   [notion value])))
-    (compiled (fn [value] (events.emit "compiled"  [notion value])))
-    (value    (fn [value] (events.emit "evaluated" [notion value])))
+    (try
+      (source.set (or source-text (fs.read-file-sync notion-path :utf-8)))
+      (catch e))
 
-    (events.on "updated"   (fn [] (log.as :updated   notion.path)))
-    (events.on "compiled"  (fn [] (log.as :compiled  notion.path)))
-    (events.on "evaluated" (fn [] (log.as :evaluated notion.path)))
+    (.map [ [ :source   :updated   ]
+            [ :compiled :compiled  ]
+            [ :value    :evaluated ] ]
+      (fn [x] (let [o (aget x 0) e (aget x 1)]
+        ((aget observs o) (fn [value] (events.emit e [notion value])))
+        (events.on e (fn [] (log.as e notion.path)))
+        (add-observ notion o (aget observs o)))))
 
-    ;(Object.define-property notion :source
-      ;{ :configurable true :enumerable true
-        ;:get (fn [] (fn [] (source)) )
-        ;:set (fn [v] (source.set v))})
-    ;(Object.define-property notion :value
-      ;{ :configurable true :enumerable true
-        ;:get (fn [] (fn [] (value)) )
-        ;:set (fn [v] (value.set v))})
     notion))
+
+(defn- add-observ [obj i obs]
+  (Object.define-property obj i
+    { :configurable true :enumerable true 
+      :get (fn [] (obs)) :set (fn [v] (obs.set v)) }))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
