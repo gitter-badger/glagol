@@ -48,10 +48,15 @@
       (catch e (reject e))))))
 
 (defn make-notion-context [notion]
-  " Prepares an execution context with globals used by notions. "
+  " Prepares an execution context with globals used by notions. 
+
+    Can't assoc context because the resulting object is uncontextified,
+    so we rely on our good old friend imperative set! to add some
+    notion-specific globals to each notion's VM execution context. "
   (let [context (runtime.make-context notion.path)]
-    ; can't use assoc because the resulting object is uncontextified
-    (set! context.log  (logging/get-logger (str (colors.bold "@") notion.name)))
+    (set! context.process (assoc context.process :cwd
+      (fn [] (path.dirname notion.path))))
+    (set! context.log  (logging/get-logger (str (colors/bold "@") notion/name)))
     (set! context.self notion)
     (set! context._    (get-notion-tree notion))
     (set! context.__   (aget (get-notion-tree notion) :__))
