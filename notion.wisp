@@ -10,17 +10,19 @@
     of its last evaluation.
 
     Passing a preloaded source is optional. "
-  [notion-path source]
+  [notion-path source-text]
   (let [notion-path (or notion-path "")
-        source      (or source      "")
+        source-text (or source-text "")
+        source (observ source-text)
+        value  (observ undefined)
         notion
           { :type      "Notion"
             :path      notion-path
             :name      (path.basename notion-path)
-            :source    (observ (source.trim))
+            :source    source
             :compiled  nil
             :requires  []
-            :value     (observ undefined)
+            :value     value
             :evaluated false
             :outdated  false 
             :parent    nil }]

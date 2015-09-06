@@ -61,14 +61,23 @@
     (set! context.__   (aget (get-notion-tree notion) :__))
     context))
 
-(defn notion-setter [i n args]
+(defn- notion-setter [i n args]
   (if (not (vector? args)) (throw (Error. (str
       "pass a [operation arg1 arg2 ... argN] vector "
       "when writing to a notion"))))
     (let [operation (aget args 0)]
       (cond
-        (= operation :watch) (n.value (aget args 1))
-        :else (throw (Err. (str op " is not a valid operation"))))))
+        (= operation :watch)
+          (cond
+            (= n.type "Notion")
+              (n.value (aget args 1))
+            (= n.type "NotionDirectory")
+              (.map (keys n.notions) (fn [i]
+                (.value (aget n.notions i) (aget args 1)))))
+        :else (throw (Error. (str
+          operation " is not a valid operation, "
+          "unlike :watch"))))
+      nil))
 
 (defn- add-notion [cwd i n]
   (Object.define-property cwd (translate i)
