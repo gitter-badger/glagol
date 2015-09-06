@@ -15,35 +15,36 @@
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
         source-text (or source-text "")
-        observs     { :source (observ) :compiled (observ) :value (observ) }
-        notion
-          { :type      "Notion"
-            :path      notion-path
-            :name      (path.basename notion-path)
-            :events    events
-            :requires  []
-            :evaluated false
-            :outdated  false 
-            :parent    nil }]
+        observables { :source   (observ source-text)
+                      :compiled (observ)
+                      :value    (observ) }
+        notion      { :type      "Notion"
+                      :path      notion-path
+                      :name      (path.basename notion-path)
+                      :events    events
+                      :requires  []
+                      :evaluated false
+                      :outdated  false
+                      :parent    nil }]
 
-    (try
-      (source.set (or source-text (fs.read-file-sync notion-path :utf-8)))
-      (catch e))
+    ;(try
+      ;(source.set (or source-text (fs.read-file-sync notion-path :utf-8)))
+      ;(catch e))
 
     (.map [ [ :source   :updated   ]
             [ :compiled :compiled  ]
             [ :value    :evaluated ] ]
       (fn [x] (let [o (aget x 0) e (aget x 1)]
-        ((aget observs o) (fn [value] (events.emit e [notion value])))
+        ((aget observables o) (fn [value] (events.emit e [notion value])))
         (events.on e (fn [] (log.as e notion.path)))
-        (add-observ notion o (aget observs o)))))
+        (add-observable-property notion o (aget observables o)))))
 
     notion))
 
-(defn- add-observ [obj i obs]
+(defn- add-observable-property [obj i observable]
   (Object.define-property obj i
     { :configurable true :enumerable true 
-      :get (fn [] (obs)) :set (fn [v] (obs.set v)) }))
+      :get (fn [] (observable)) :set (fn [v] (observable.set v)) }))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
