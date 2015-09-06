@@ -26,20 +26,23 @@
 
 (defn load-notion-directory
   [dir]
-  (Q.Promise (fn [resolve reject]
-    (glob (path.join dir "*") {} (fn [err files]
-      (set! files (ignore-files files))
-      (if err (reject err))
-      (.then (Q.allSettled (files.map (fn [file]
-        (Q.Promise (fn [resolve reject]
-          (fs.stat file (fn [err stats]
-            (if err (reject err)
-              (resolve (if (stats.is-directory)
-                (load-notion-directory file)
-                (notion.load-notion file)) )))))))))
-        (fn [results]
-          (resolve (make-notion-directory dir
-            (results.map #(.-value %1)))))))))))
+  (let [dir (path.resolve dir)]
+    (Q.Promise (fn [resolve reject]
+      (if (not (fs.exists-sync dir)) (reject (str dir " does not exist")))
+      (glob (path.join dir "*") {} (fn [err files]
+        (log.as :glob dir files)
+        (set! files (ignore-files files))
+        (if err (reject err))
+        (.then (Q.allSettled (files.map (fn [file]
+          (Q.Promise (fn [resolve reject]
+            (fs.stat file (fn [err stats]
+              (if err (reject err)
+                (resolve (if (stats.is-directory)
+                  (load-notion-directory file)
+                  (notion.load-notion file)) )))))))))
+          (fn [results]
+            (resolve (make-notion-directory dir
+              (results.map #(.-value %1))))))))))))
 
 (defn freeze-notion-directory
   " Returns a static snapshot of all loaded notions. "

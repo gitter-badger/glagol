@@ -21,10 +21,12 @@
   " Starts up the engine in a specified root directory. "
   ([dir] (start dir {}))
   ([dir opts]
-    (let [log
+    (let [dir
+            (path.resolve dir)
+          log
             (logging.get-logger "engine")
           engine-state
-            { :root    (path.resolve dir)
+            { :root    dir
               :tree    {}
               :watcher { :add (fn []) :on (fn []) } }]
       (-> (tree.load-notion-directory dir)

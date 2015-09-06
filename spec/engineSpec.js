@@ -3,7 +3,7 @@ var runtime = require('../runtime.js')
   , tree    = runtime.requireWisp('../tree.wisp')
   , path    = require('path');
 
-var root = './sample';
+var root = './spec/sample';
 
 describe('an engine', function () {
 
@@ -24,6 +24,7 @@ describe('an engine', function () {
   it('has a root notion directory', function (done) {
     e.then(function (state) {
       expect(state.tree.type).toBe('NotionDirectory');
+      expect(state.tree.path).toBe(path.resolve(root));
       done();
     })
   })
@@ -43,16 +44,17 @@ describe('a notion directory', function () {
     d.then(function (state) {
       expect(state.type).toBe('NotionDirectory');
       expect(state.name).toBe(path.basename(root));
-      expect(state.path).toBe(root);
+      expect(state.path).toBe(path.resolve(root));
       done();
     })
   })
 
-  //it('recursively loads its contents as notions', function (done) {
-    //d.then(function (state) {
-      //console.log(state.notions);
-      //done();
-    //})
-  //})
+  it('loads its contents', function (done) {
+    d.then(function (state) {
+      console.log(state.notions);
+      expect(Object.keys(state.notions).length).toBe(4);
+      done();
+    })
+  })
 
 })
