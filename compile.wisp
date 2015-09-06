@@ -8,6 +8,9 @@
 (def ^:private util      (require "./util.wisp"))
 (def ^:private vm        (require "vm"))
 
+(def ^:private translate
+  (.-translate-identifier-word (require "wisp/backend/escodegen/writer.js")))
+
 (defn- updated
   " Emits when an aspect of a notion (source code, compiled code, value)
     has been updated. "
@@ -55,7 +58,7 @@
     context))
 
 (defn- add-notion [cwd i n]
-  (Object.define-property cwd i
+  (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
       :get (fn []
         (if (or (not n.evaluated) n.outdated)
@@ -63,7 +66,7 @@
         (n.value)) }))
 
 (defn- add-notion-dir [cwd i n]
-  (Object.define-property cwd i
+  (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
       :get (fn [] (get-notion-tree n)) }))
 
