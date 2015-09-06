@@ -80,9 +80,12 @@ describe('a notion', function () {
     expect(n.source()).toBe('42');
   })
 
+  it('automatically loads its source on request', function () {
+  })
+
   it('automatically compiles on request', function () {
     var n = notion.makeNotion('', '42');
-    expect(n.compiled().output.code).toBe(42);
+    expect(n.compiled.output.code).toBe(42);
   })
 
   it('automatically evaluates on request', function () {

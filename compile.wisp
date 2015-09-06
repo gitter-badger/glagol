@@ -79,20 +79,19 @@
           "unlike :watch"))))
       nil))
 
-(defn- add-notion [cwd i n]
+(defn- add [cwd i n getter]
   (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
-      :get (fn []
-        (if (or (not n.evaluated) n.outdated)
-          (evaluate-notion-sync n))
-        (n.value))
+      :get getter
       :set (notion-setter.bind nil i n) }))
 
+(defn- add-notion [cwd i n]
+  (add cwd i n (fn []
+    (if (or (not n.evaluated) n.outdated) (evaluate-notion-sync n))
+    (n.value))))
+
 (defn- add-notion-dir [cwd i n]
-  (Object.define-property cwd (translate i)
-    { :configurable true :enumerable true
-      :get (fn [] (get-notion-tree n))
-      :set (notion-setter.bind nil i n) }))
+  (add cwd i n (fn [] (get-notion-tree n))))
 
 (defn get-notion-tree
   " From file, . points to parent and .. to grandparent;
