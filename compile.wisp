@@ -53,16 +53,20 @@
     (set! context._    (get-notion-tree notion))
     context))
 
-(defn- add-notion-reference [cwd i n]
+(defn- add-notion [cwd i n]
   (Object.define-property cwd i
     { :configurable true :enumerable true
-      :get (fn [] (if (not notion.evaluated) "<not evaluated>" (notion.value)))}))
+      :get (fn [] (if (not n.evaluated) "<not evaluated>" (n.value)))}))
+
+(defn- add-notion-dir [cwd i n]
+  (Object.define-property cwd i
+    { :configurable true :enumerable true
+      :get (fn [] (get-notion-tree n)) }))
 
 (defn get-notion-tree
   " From file, . points to parent and .. to grandparent;
     from dir, .. points to parent and . to self. "
   [notion]
-  (log.as :get notion.name notion.type (if notion.parent notion.parent.name "<root>"))
   (let [cwd {}]
     (cond
       (and (= notion.type "Notion") notion.parent) (do
@@ -74,8 +78,8 @@
         (.map (keys notion.notions) (fn [i]
           (let [n (aget notion.notions i)]
             (cond
-              (= n.type "Notion") (add-notion-reference cwd i n)
-              (= n.type "NotionDirectory") (aset cwd i "<dir>")))))
+              (= n.type "Notion") (add-notion cwd i n)
+              (= n.type "NotionDirectory") (add-notion-dir cwd i n)))))
         (if notion.parent (set! cwd.__ (get-notion-tree notion.parent)))))
     cwd))
 

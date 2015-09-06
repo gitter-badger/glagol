@@ -103,9 +103,15 @@ describe('a notion tree', function () {
 
   it('for non-root directory, __ points to parent', function (done) {
     d.then(function (state) {
-      var t = compile.getNotionTree(state.notions['d1']);
-      console.log(t);
+      var t1 = compile.getNotionTree(state);
+      var t2 = compile.getNotionTree(state.notions['d1']);
+      var t3 = compile.getNotionTree(state.notions['d1'].notions['d12']);
+      expect(s(t2.__)).toEqual(s(t1));
+      expect(s(t3.__)).toEqual(s(t2));
+      expect(s(t3.__.__)).toEqual(s(t1));
       done();
+
+      function s (x) { return JSON.stringify(Object.keys(x)) }
     })
   })
 
