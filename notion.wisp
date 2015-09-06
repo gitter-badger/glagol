@@ -4,23 +4,27 @@
 (def ^:private Q      (require "q"))
 
 (defn make-notion
-  " Creates a new Notion - an atom-type structure
-    corresponding to a source code file but also
-    containing its transpiled JS form and the result
+  " A Notion corresponds to a source code file;
+    it contains its contents, the result of its
+    transpilation to JavaScript, and the result
     of its last evaluation.
 
     Passing a preloaded source is optional. "
   [notion-path source]
-  { :type      "Notion"
-    :path      notion-path
-    :name      (path.basename notion-path)
-    :source    (observ (.trim (or source "")))
-    :compiled  nil
-    :requires  []
-    :value     (observ undefined)
-    :evaluated false
-    :outdated  false 
-    :parent    nil })
+  (let [notion-path (or notion-path "")
+        source      (or source      "")
+        notion
+          { :type      "Notion"
+            :path      notion-path
+            :name      (path.basename notion-path)
+            :source    (observ (source.trim))
+            :compiled  nil
+            :requires  []
+            :value     (observ undefined)
+            :evaluated false
+            :outdated  false 
+            :parent    nil }]
+    notion))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "

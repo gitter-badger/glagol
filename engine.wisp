@@ -1,6 +1,7 @@
 (def ^:private Q (require "q"))
 (set! Q.longStackSupport true)
 
+(def ^:private chokidar  (require "chokidar"))
 (def ^:private colors    (require "colors/safe"))
 (def ^:private logging   (require "etude-logging"))
 (def ^:private path      (require "path"))
@@ -13,10 +14,6 @@
 (def runtime (require "./runtime.js"))
 (def tree    (require "./tree.wisp"))
 
-(def ^:private = runtime.wisp.runtime.is-equal)
-
-(def log )
-
 (defn start
   " Starts up the engine in a specified root directory. "
   ([dir] (start dir {}))
@@ -25,12 +22,24 @@
             (path.resolve dir)
           log
             (logging.get-logger "engine")
-          engine-state
+          state
             { :root    dir
-              :tree    {}
-              :watcher { :add (fn []) :on (fn []) } }]
+              :tree    nil
+              :watcher nil }]
       (-> (tree.load-notion-directory dir)
         (.then (fn [notions]
-          (set! engine-state.tree notions)
+          (set! state.tree notions)
+          (set! state.watcher (.watch (require "chokidar") ""))
+          (watch-recursive state.watcher notions)
+          (watcher.on :all (fn [] (log.as :watcher arguments)))
           (if opts.verbose (log.as :loaded-notion-tree notions))
-          engine-state))))))
+          state))))))
+
+(defn watch-recursive [watcher n]
+  (cond
+    (and (= n.type "Notion") n.path)
+      (do (log 1) (watcher.add n.path))
+    (and (= n.type "NotionDirectory") n.notions)
+      (do (log 2) (.map (keys (or n.notions {})) (fn [n] (watch-recursive watcher n))))
+    :else
+      (do (log 3) (throw (Error. (str "unknown thing " n " in notion tree"))))))

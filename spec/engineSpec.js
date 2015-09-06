@@ -31,7 +31,7 @@ describe('an engine', function () {
     e.then(function (state) {
       expect(state.root).toBe(path.resolve(root));
       done();
-    })
+    }).done();
   })
 
   it('has a root notion directory', function (done) {
@@ -46,9 +46,13 @@ describe('an engine', function () {
 
 describe('a notion', function () {
 
-  it('knows its type, name, and path', function () {
+  it('knows its type', function () {
     var n = notion.makeNotion('foo/bar-baz');
     expect(n.type).toBe('Notion');
+  });
+
+  it('knows its path and derives its name from it', function () {
+    var n = notion.makeNotion('foo/bar-baz');
     expect(n.path).toBe('foo/bar-baz');
     expect(n.name).toBe('bar-baz');
   });
@@ -77,7 +81,8 @@ describe('a notion', function () {
   })
 
   it('automatically compiles on request', function () {
-    var n = notion.makeNotion('')
+    var n = notion.makeNotion('', '42');
+    expect(n.compiled().output.code).toBe(42);
   })
 
   it('automatically evaluates on request', function () {
