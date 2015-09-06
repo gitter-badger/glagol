@@ -1,7 +1,8 @@
 var runtime = require('../runtime.js')
   , engine  = runtime.requireWisp('../engine.wisp')
-  , tree    = runtime.requireWisp('../tree.wisp')
-  , compile = runtime.requireWisp('../compile.wisp')
+  , compile = engine.compile
+  , tree    = engine.tree
+  , notion  = engine.notion
   , path    = require('path');
 
 var root = './spec/sample';
@@ -17,7 +18,10 @@ var notionTree =
 describe('an engine', function () {
 
   var e;
-  beforeEach(function () { e = engine.start(root); })
+
+  beforeEach(function () {
+    e = engine.start(root);
+  })
 
   it('is promised by engine.start', function () {
     expect(e.then).toBeDefined();
@@ -40,10 +44,54 @@ describe('an engine', function () {
 
 });
 
+describe('a notion', function () {
+
+  it('knows its type, name, and path', function () {
+    var n = notion.makeNotion('foo/bar-baz');
+    expect(n.type).toBe('Notion');
+    expect(n.path).toBe('foo/bar-baz');
+    expect(n.name).toBe('bar-baz');
+  });
+
+  it('can have an empty name', function () {
+    var n = notion.makeNotion('');
+    expect(n.name).toBe('');
+    expect(n.path).toBe('');
+  })
+
+  it('has an empty name and source if not specified', function () {
+    var n = notion.makeNotion();
+    expect(n.name).toBe('');
+    expect(n.path).toBe('');
+    expect(n.source()).toBe('');
+  })
+
+  it('has empty source if not specified', function () {
+    var n = notion.makeNotion('foo/bar-baz');
+    expect(n.source()).toBe('');
+  })
+
+  it('has source as specified', function () {
+    var n = notion.makeNotion('foo/bar-baz', '42');
+    expect(n.source()).toBe('42');
+  })
+
+  it('automatically compiles on request', function () {
+    var n = notion.makeNotion('')
+  })
+
+  it('automatically evaluates on request', function () {
+  })
+
+})
+
 describe('a notion directory', function () {
 
   var d;
-  beforeEach(function () { d = tree.loadNotionDirectory(root); })
+
+  beforeEach(function () {
+    d = tree.loadNotionDirectory(root);
+  })
 
   it('is promised by tree.load-notion-directory', function () {
     expect(d.then).toBeDefined();
@@ -83,7 +131,10 @@ describe('a notion directory', function () {
 describe('a notion tree', function () {
 
   var d;
-  beforeEach(function () { d = tree.loadNotionDirectory(root); })
+
+  beforeEach(function () {
+    d = tree.loadNotionDirectory(root);
+  })
 
   it('for the root directory, __ is undefined', function (done) {
     d.then(function (state) {
