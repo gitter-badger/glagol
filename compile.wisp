@@ -51,6 +51,7 @@
     (set! context.log  (logging/get-logger (str (colors.bold "@") notion.name)))
     (set! context.self notion)
     (set! context._    (get-notion-tree notion))
+    (set! context.__   (aget (get-notion-tree notion) :__))
     context))
 
 (defn- add-notion [cwd i n]
@@ -72,10 +73,8 @@
   [notion]
   (let [cwd {}]
     (cond
-      (and (= notion.type "Notion") notion.parent) (do
-        (set! cwd._  (get-notion-tree notion.parent))
-        (if notion.parent.parent
-          (set! cwd.__ (get-notion-tree notion.parent.parent))))
+      (and (= notion.type "Notion") notion.parent)
+        (set! cwd (get-notion-tree notion.parent))
       (= notion.type "NotionDirectory") (do
         (set! cwd._  cwd)
         (.map (keys notion.notions) (fn [i]
