@@ -1,9 +1,18 @@
 var runtime = require('../runtime.js')
   , engine  = runtime.requireWisp('../engine.wisp')
   , tree    = runtime.requireWisp('../tree.wisp')
+  , compile = runtime.requireWisp('../compile.wisp')
   , path    = require('path');
 
 var root = './spec/sample';
+var notionTree =
+  { d1: { d11: { n111: null }
+        , d12: { n121: null, n122: null }
+        , n11: null }
+  , d2: { n21: null }
+  , d3: {}
+  , n1: null
+  , n2: null }
 
 describe('an engine', function () {
 
@@ -64,14 +73,65 @@ describe('a notion directory', function () {
 
   it('recursively loads its contents', function (done) {
     d.then(function (state) {
-      compareNotionTree(state.notions,
-        { d1: { d11: { n3: null }, d12: { n4: null }, n11: null }
-        , d2: { n21: null }
-        , d3: {}
-        , n1: null
-        , n2: null });
+      compareNotionTree(state.notions, notionTree);
       done();
     })
   })
+
+})
+
+describe('a notion tree', function () {
+
+  var d;
+  beforeEach(function () { d = tree.loadNotionDirectory(root); })
+
+  it('for any directory, _ points to self', function (done) {
+    d.then(function (state) {
+      var t = compile.getNotionTree(state);
+      expect(t._).toBe(t);
+      done();
+    })
+  })
+
+  it('for the root directory, __ is undefined', function (done) {
+    d.then(function (state) {
+      var t = compile.getNotionTree(state);
+      expect(t.__).toBeUndefined();
+      done();
+    })
+  })
+
+  it('for non-root directory, __ points to parent', function (done) {
+    d.then(function (state) {
+      var t = compile.getNotionTree(state.notions['d1']);
+      console.log(t);
+      done();
+    })
+  })
+
+  //it('root dir has null parent', function (done) {
+    //d.then(function (state) {
+      //var t = compile.getNotionTree(state);
+      //expect(t._).toBe(t);
+      //expect
+      //done();
+    //})
+  //})
+
+  var view_from_n121_ =
+    { _:  { n121: "Notion"
+          , n122: "Notion" }
+    , __: { d11: { n111: "Notion" }
+          , d12: "Dir"
+          , _:   "Dir"
+          , __:  { d1: { d11: "Dir"
+                       , d12: "Dir"
+                       , n11: "Notion" }
+                 , d2: { n21: "Notion" }
+                 , d3: { }
+                 , n1: "Notion"
+                 , n2: "Notion"
+                 , _:  "Dir"
+                 , __: null } } };
 
 })
