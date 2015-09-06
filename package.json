@@ -4,7 +4,7 @@
   "description": "",
   "main": "engine.wisp",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/jasmine/bin/jasmine.js"
   },
   "author": "",
   "license": "ISC",
@@ -12,15 +12,15 @@
     "chokidar": "^1.0.4",
     "colors": "^1.1.2",
     "detective": "^4.1.1",
+    "etude-logging": "git://github.com/egasimus/etude-logging",
     "eventemitter2": "^0.4.14",
     "glob": "^5.0.14",
+    "jasmine": "^2.3.2",
     "keypress": "^0.2.1",
     "observ": "^0.2.0",
     "q": "^1.4.1",
     "resolve": "^1.1.6",
     "source-map-support": "^0.3.2",
-
-    "etude-logging": "git://github.com/egasimus/etude-logging",
     "wisp": "git://github.com/egasimus/wisp.git"
   }
 }

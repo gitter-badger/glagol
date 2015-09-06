@@ -64,7 +64,7 @@
       ; ignoring notion installed by previous iteration
       (if (= -1 (.index-of (keys notion-tree) n))
         (let [notion (aget current.notions n)]
-          (cond
+          (if (not (notion-tree.has-own-property n)) (cond
             (= notion.type "NotionDirectory")
               (aset notion-tree n (get-notion-tree notion))
             (= notion.type "Notion")
@@ -75,7 +75,7 @@
                     (fn []
                       (if (or (not notion.evaluated) notion.outdated)
                         (evaluate-notion-sync notion))
-                      (notion.value)) }))))))
+                      (notion.value)) })))))))
     (if current.parent
       (recur current.parent (assoc {} current.name notion-tree))
       notion-tree)))
