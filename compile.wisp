@@ -61,37 +61,39 @@
     (set! context.__   (aget (get-notion-tree notion) :__))
     context))
 
-(defn- notion-setter [i n args]
-  (if (not (vector? args)) (throw (Error. (str
-      "pass a [operation arg1 arg2 ... argN] vector "
-      "when writing to a notion"))))
-    (let [operation (aget args 0)]
-      (cond
-        (= operation :watch)
-          (cond
-            (= n.type "Notion")
-              (n.value (aget args 1))
-            (= n.type "NotionDirectory")
-              (.map (keys n.notions) (fn [i]
-                (.value (aget n.notions i) (aget args 1)))))
-        :else (throw (Error. (str
-          operation " is not a valid operation, "
-          "unlike :watch"))))
-      nil))
+(defn- notion-setter [i n]
+  (fn [args]
+    (if (not (vector? args)) (throw (Error. (str
+        "pass a [operation arg1 arg2 ... argN] vector "
+        "when writing to a notion"))))
+      (let [operation (aget args 0)]
+        (cond
+          (= operation :watch)
+            (cond
+              (= n.type "Notion")
+                (n.value (aget args 1))
+              (= n.type "NotionDirectory")
+                (.map (keys n.notions) (fn [i]
+                  (.value (aget n.notions i) (aget args 1)))))
+          :else (throw (Error. (str
+            operation " is not a valid operation, "
+            "unlike :watch"))))
+        nil)))
 
-(defn- add [cwd i n getter]
+(defn- notion-dir-getter [n]
+  (fn [] (get-notion-tree n)))
+
+(defn- notion-getter [n]
+  (fn [] (if (or (not n.evaluated) n.outdated) (evaluate-notion-sync n))
+         (n.value)))
+
+(defn- add-to-notion-tree [cwd i n]
   (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
-      :get getter
-      :set (notion-setter.bind nil i n) }))
-
-(defn- add-notion [cwd i n]
-  (add cwd i n (fn []
-    (if (or (not n.evaluated) n.outdated) (evaluate-notion-sync n))
-    (n.value))))
-
-(defn- add-notion-dir [cwd i n]
-  (add cwd i n (fn [] (get-notion-tree n))))
+      :get (cond
+        (= n.type "Notion")          (notion-getter n)
+        (= n.type "NotionDirectory") (notion-dir-getter n))
+      :set (notion-setter i n) }))
 
 (defn get-notion-tree
   " From file, . points to parent and .. to grandparent;
@@ -102,12 +104,10 @@
       (and (= notion.type "Notion") notion.parent)
         (set! cwd (get-notion-tree notion.parent))
       (= notion.type "NotionDirectory") (do
-        (set! cwd._  cwd)
+        (set! cwd._ cwd)
         (.map (keys notion.notions) (fn [i]
           (let [n (aget notion.notions i)]
-            (cond
-              (= n.type "Notion") (add-notion cwd i n)
-              (= n.type "NotionDirectory") (add-notion-dir cwd i n)))))
+            (add-to-notion-tree cwd i n))))
         (if notion.parent (set! cwd.__ (get-notion-tree notion.parent)))))
     cwd))
 
