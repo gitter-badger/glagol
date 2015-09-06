@@ -54,9 +54,8 @@
     so we rely on our good old friend imperative set! to add some
     notion-specific globals to each notion's VM execution context. "
   (let [context (runtime.make-context notion.path)]
-    (set! context.process (assoc context.process :cwd
-      (fn [] (path.dirname notion.path))))
-    (set! context.log  (logging/get-logger (str (colors/bold "@") notion/name)))
+    (set! context.process.cwd (fn [] (path.dirname notion.path)))
+    (set! context.log  (logging.get-logger (str (colors.bold "@") notion.name)))
     (set! context.self notion)
     (set! context._    (get-notion-tree notion))
     (set! context.__   (aget (get-notion-tree notion) :__))
