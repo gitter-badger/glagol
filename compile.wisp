@@ -61,6 +61,15 @@
     (set! context.__   (aget (get-notion-tree notion) :__))
     context))
 
+(defn notion-setter [i n args]
+  (if (not (vector? args)) (throw (Error. (str
+      "pass a [operation arg1 arg2 ... argN] vector "
+      "when writing to a notion"))))
+    (let [operation (aget args 0)]
+      (cond
+        (= operation :watch) (n.value (aget args 1))
+        :else (throw (Err. (str op " is not a valid operation"))))))
+
 (defn- add-notion [cwd i n]
   (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
@@ -68,19 +77,13 @@
         (if (or (not n.evaluated) n.outdated)
           (evaluate-notion-sync n))
         (n.value))
-      :set (fn [args]
-        (if (not (vector? args)) (throw (Error. (str
-          "pass a [operation arg1 arg2 ... argN] vector"
-          "when writing to a notion"))))
-        (let [operation (aget args 0)]
-          (cond
-            (= operation :watch) (n.value (aget args 1))
-            :else (throw (Err. (str op " is not a valid operation")))))) }))
+      :set (notion-setter.bind nil i n) }))
 
 (defn- add-notion-dir [cwd i n]
   (Object.define-property cwd (translate i)
     { :configurable true :enumerable true
-      :get (fn [] (get-notion-tree n)) }))
+      :get (fn [] (get-notion-tree n))
+      :set (notion-setter.bind nil i n) }))
 
 (defn get-notion-tree
   " From file, . points to parent and .. to grandparent;
