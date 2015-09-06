@@ -56,7 +56,10 @@
 (defn- add-notion [cwd i n]
   (Object.define-property cwd i
     { :configurable true :enumerable true
-      :get (fn [] (if (not n.evaluated) "<not evaluated>" (n.value)))}))
+      :get (fn []
+        (if (or (not n.evaluated) n.outdated)
+          (evaluate-notion-sync n))
+        (n.value)) }))
 
 (defn- add-notion-dir [cwd i n]
   (Object.define-property cwd i
