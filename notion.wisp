@@ -35,6 +35,10 @@
     (compiled (fn [value] (events.emit "compiled"  [notion value])))
     (value    (fn [value] (events.emit "evaluated" [notion value])))
 
+    (events.on "updated"   (fn [] (log.as :updated   notion.path)))
+    (events.on "compiled"  (fn [] (log.as :compiled  notion.path)))
+    (events.on "evaluated" (fn [] (log.as :evaluated notion.path)))
+
     ;(Object.define-property notion :source
       ;{ :configurable true :enumerable true
         ;:get (fn [] (fn [] (source)) )

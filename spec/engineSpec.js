@@ -3,6 +3,7 @@ var runtime = require('../runtime.js')
   , compile = engine.compile
   , tree    = engine.tree
   , notion  = engine.notion
+  , fs      = require('fs')
   , path    = require('path');
 
 var root = './spec/sample';
@@ -81,14 +82,18 @@ describe('a notion', function () {
   })
 
   it('automatically loads its source on request', function () {
+    var n = notion.makeNotion('spec/sample/n1');
+    expect(n.source).toBe(fs.readFileSync('spec/sample/n1', 'utf8'));
   })
 
   it('automatically compiles on request', function () {
     var n = notion.makeNotion('', '42');
-    expect(n.compiled.output.code).toBe(42);
+    expect(n.compiled.output.code).toBe([]);
   })
 
   it('automatically evaluates on request', function () {
+    var n = notion.makeNotion('', '42');
+    expect(n.compiled.output.code).toBe(42);
   })
 
 })
