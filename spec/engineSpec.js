@@ -48,14 +48,17 @@ describe('an engine', function () {
 describe('a notion', function () {
 
   it('knows its type', function () {
-    var n = notion.makeNotion('foo/bar-baz');
-    expect(n.type).toBe('Notion');
+    var n1 = notion.makeNotion();
+    expect(n1.type).toBe('Notion');
   });
 
-  it('knows its path and derives its name from it', function () {
-    var n = notion.makeNotion('foo/bar-baz');
-    expect(n.path).toBe('foo/bar-baz');
-    expect(n.name).toBe('bar-baz');
+  it('knows its path and correctly derives its name from it', function () {
+    var n1 = notion.makeNotion('spec/sample/n1');
+    expect(n1.path).toBe('spec/sample/n1');
+    expect(n1.name).toBe('n1');
+    var n121 = notion.makeNotion('spec/sample/d1/d12/n121');
+    expect(n121.path).toBe('spec/sample/d1/d12/n121');
+    expect(n121.name).toBe('n121');
   });
 
   it('can have an empty name', function () {
@@ -66,18 +69,19 @@ describe('a notion', function () {
 
   it('has an empty name and source if not specified', function () {
     var n = notion.makeNotion();
+    console.log(n);
     expect(n.name).toBe('');
     expect(n.path).toBe('');
     expect(n.source).toBe('');
   })
 
   it('has empty source if not specified', function () {
-    var n = notion.makeNotion('foo/bar-baz');
-    expect(n.source).toBe('');
+    var n = notion.makeNotion('spec/sample/n1');
+    expect(n.source).toBe("Hello World!");
   })
 
   it('has source as specified', function () {
-    var n = notion.makeNotion('foo/bar-baz', '42');
+    var n = notion.makeNotion('spec/sample/n1', '42');
     expect(n.source).toBe('42');
   })
 

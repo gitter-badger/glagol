@@ -4,6 +4,11 @@
 (def ^:private path   (require "path"))
 (def ^:private Q      (require "q"))
 
+(def ^:private pipeline-event-names
+  { :source   :loaded
+    :compiled :compiled
+    :value    :evaluated })
+
 (defn make-notion
   " A Notion corresponds to a source code file;
     it contains its contents, the result of its
@@ -14,9 +19,9 @@
   [notion-path source-text]
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
-        pipeline    { :loaded    nil
-                      :compiled  nil
-                      :evaluated nil }
+        pipeline    { :source   (or source-text "")
+                      :compiled nil
+                      :value    nil }
         notion      { :type      "Notion"
                       :path      notion-path
                       :name      (path.basename notion-path)
@@ -28,10 +33,8 @@
 
     (.map (keys pipeline) (add-observable-property!.bind nil notion pipeline))
 
-    (cond
-      source-text (set! pipeline.loaded source-text)
-      notion-path (fs.read-file notion-path :utf-8 (fn [err source-file]
-        (if err (throw err)) (set! notion.loaded source-file))))
+    (if (and (not source-text) notion-path)
+      (set! notion-path (fs.read-file-sync notion-path :utf-8)))
 
     notion))
 
@@ -42,7 +45,8 @@
       :get (fn []
         (aget pipeline i))
       :set (fn [v]
-        (aset pipeline i v) (notion.events.emit i [notion v])) }))
+        (aset pipeline i v)
+        (notion.events.emit (aget pipeline-event-names i) [notion v])) }))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
