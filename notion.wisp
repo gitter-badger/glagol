@@ -14,10 +14,9 @@
   [notion-path source-text]
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
-        source-text (or source-text "")
-        observables { :source   (observ source-text)
-                      :compiled (observ)
-                      :value    (observ) }
+        pipeline    { :loaded    nil
+                      :compiled  nil
+                      :evaluated nil }
         notion      { :type      "Notion"
                       :path      notion-path
                       :name      (path.basename notion-path)
@@ -27,24 +26,23 @@
                       :outdated  false
                       :parent    nil }]
 
-    ;(try
-      ;(source.set (or source-text (fs.read-file-sync notion-path :utf-8)))
-      ;(catch e))
+    (.map (keys pipeline) (add-observable-property!.bind nil notion pipeline))
 
-    (.map [ [ :source   :updated   ]
-            [ :compiled :compiled  ]
-            [ :value    :evaluated ] ]
-      (fn [x] (let [o (aget x 0) e (aget x 1)]
-        ((aget observables o) (fn [value] (events.emit e [notion value])))
-        (events.on e (fn [] (log.as e notion.path)))
-        (add-observable-property notion o (aget observables o)))))
+    (cond
+      source-text (set! pipeline.loaded source-text)
+      notion-path (fs.read-file notion-path :utf-8 (fn [err source-file]
+        (if err (throw err)) (set! notion.loaded source-file))))
 
     notion))
 
-(defn- add-observable-property [obj i observable]
-  (Object.define-property obj i
-    { :configurable true :enumerable true 
-      :get (fn [] (observable)) :set (fn [v] (observable.set v)) }))
+(defn- add-observable-property! [notion pipeline i]
+  (Object.define-property notion i
+    { :configurable true
+      :enumerable   true
+      :get (fn []
+        (aget pipeline i))
+      :set (fn [v]
+        (aset pipeline i v) (notion.events.emit i [notion v])) }))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
