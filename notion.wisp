@@ -4,11 +4,6 @@
 (def ^:private path   (require "path"))
 (def ^:private Q      (require "q"))
 
-(def ^:private pipeline-event-names
-  { :source   :loaded
-    :compiled :compiled
-    :value    :evaluated })
-
 (defn make-notion
   " A Notion corresponds to a source code file;
     it contains its contents, the result of its
@@ -19,7 +14,7 @@
   [notion-path source-text]
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
-        pipeline    { :source   (if (string? source-text) source-text "")
+        pipeline    { :source   (if (string? source-text) source-text nil)
                       :compiled nil
                       :value    nil }
         notion      { :type      "Notion"
@@ -33,20 +28,36 @@
 
     (.map (keys pipeline) (add-observable-property!.bind nil notion pipeline))
 
-    (if (and (not (string? source-text)) notion-path)
-      (set! pipeline.source (fs.read-file-sync notion-path :utf8)))
-
     notion))
+
+(def ^:private pipeline-event-names
+  { :source   :loaded
+    :compiled :compiled
+    :value    :evaluated })
+
+(def ^:private pipeline-operations
+  { :source   read-notion-sync
+    :compiled (fn [] (log.as :compile!))
+    :value    (fn []) })
+
+(defn- read-notion-sync! [notion]
+  (if notion.path
+    (let [source (fs.read-file-sync notion.path :utf8)]
+      (set! notion.source source)
+      source)
+    ""))
 
 (defn- add-observable-property! [notion pipeline i]
   (Object.define-property notion i
     { :configurable true
       :enumerable   true
       :get (fn []
-        (aget pipeline i))
+             (if (nil? (aget pipeline i))
+               ((aget pipeline-operations i) notion)
+               (aget pipeline i)))
       :set (fn [v]
-        (aset pipeline i v)
-        (notion.events.emit (aget pipeline-event-names i) [notion v])) }))
+             (aset pipeline i v)
+             (notion.events.emit (aget pipeline-event-names i) [notion v])) }))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "
