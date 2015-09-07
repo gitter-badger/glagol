@@ -56,7 +56,20 @@
     (let [compiled (runtime.compile-source notion.source notion.name)]
       (set! notion.compiled compiled)
       compiled)
-    ""))
+    {}))
+
+(defn evaluate-notion-sync!
+  " Evaluates the notion in a newly created context. "
+  [notion]
+  (if (and notion.source notion.compiled
+           notion.compiled.output notion.compiled.output.code)
+    (let [context (make-notion-context notion)
+          value   (vm.run-in-context
+                    (runtime.wrap notion.compiled.output.code)
+                    context { :filename notion.name })]
+      (if context.error (throw context.error)
+      value))
+    undefined))
 
 (defn- add-observable-property! [notion pipeline i]
   (Object.define-property notion i
