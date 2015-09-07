@@ -1,8 +1,10 @@
-(def ^:private ee2    (require "eventemitter2"))
-(def ^:private fs     (require "fs"))
-(def ^:private observ (require "observ"))
-(def ^:private path   (require "path"))
-(def ^:private Q      (require "q"))
+(def ^:private ee2     (require "eventemitter2"))
+(def ^:private fs      (require "fs"))
+(def ^:private observ  (require "observ"))
+(def ^:private path    (require "path"))
+(def ^:private runtime (require "./runtime.js"))
+(def ^:private Q       (require "q"))
+(def ^:private util    (require "./util.wisp"))
 
 (defn make-notion
   " A Notion corresponds to a source code file;
@@ -36,8 +38,8 @@
     :value    :evaluated })
 
 (def ^:private pipeline-operations
-  { :source   read-notion-sync
-    :compiled (fn [] (log.as :compile!))
+  { :source   read-notion-sync!
+    :compiled compile-notion-sync!
     :value    (fn []) })
 
 (defn- read-notion-sync! [notion]
@@ -45,6 +47,15 @@
     (let [source (fs.read-file-sync notion.path :utf8)]
       (set! notion.source source)
       source)
+    ""))
+
+(defn- compile-notion-sync! [notion]
+  " Compiles a notion's source code and determines its dependencies. "
+  [notion]
+  (if notion.source
+    (let [compiled (runtime.compile-source notion.source notion.name)]
+      (set! notion.compiled compiled)
+      compiled)
     ""))
 
 (defn- add-observable-property! [notion pipeline i]
