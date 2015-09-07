@@ -67,22 +67,18 @@ describe('a notion', function () {
     expect(n.path).toBe('');
   })
 
-  it('has an empty name and source if not specified', function () {
+  it('has empty name and source if not specified', function () {
     var n = notion.makeNotion();
-    console.log(n);
     expect(n.name).toBe('');
     expect(n.path).toBe('');
     expect(n.source).toBe('');
   })
 
-  it('has empty source if not specified', function () {
-    var n = notion.makeNotion('spec/sample/n1');
-    expect(n.source).toBe("Hello World!");
-  })
-
   it('has source as specified', function () {
-    var n = notion.makeNotion('spec/sample/n1', '42');
-    expect(n.source).toBe('42');
+    var n = notion.makeNotion('spec/sample/n1', '');
+    expect(n.source).toBe('');
+    var n = notion.makeNotion('spec/sample/n1', 'NIICHAVO');
+    expect(n.source).toBe('NIICHAVO');
   })
 
   it('automatically loads its source on request', function () {
@@ -92,12 +88,15 @@ describe('a notion', function () {
 
   it('automatically compiles on request', function () {
     var n = notion.makeNotion('', '42');
+    expect(n.compiled).toBeDefined();
+    expect(n.compiled).not.toBeNull();
+    expect(n.compiled.output).toBeDefined();
     expect(n.compiled.output.code).toBe([]);
   })
 
   it('automatically evaluates on request', function () {
     var n = notion.makeNotion('', '42');
-    expect(n.compiled.output.code).toBe(42);
+    expect(n.value).toBe(42);
   })
 
 })

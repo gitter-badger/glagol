@@ -19,7 +19,7 @@
   [notion-path source-text]
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
-        pipeline    { :source   (or source-text "")
+        pipeline    { :source   (if (string? source-text) source-text "")
                       :compiled nil
                       :value    nil }
         notion      { :type      "Notion"
@@ -33,8 +33,8 @@
 
     (.map (keys pipeline) (add-observable-property!.bind nil notion pipeline))
 
-    (if (and (not source-text) notion-path)
-      (set! notion-path (fs.read-file-sync notion-path :utf-8)))
+    (if (and (not (string? source-text)) notion-path)
+      (set! pipeline.source (fs.read-file-sync notion-path :utf8)))
 
     notion))
 
