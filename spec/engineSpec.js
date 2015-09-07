@@ -91,7 +91,11 @@ describe('a notion', function () {
     expect(n.compiled).toBeDefined();
     expect(n.compiled).not.toBeNull();
     expect(n.compiled.output).toBeDefined();
-    expect(n.compiled.output.code).toBe([]);
+    fs.writeFileSync('foo', n.compiled.output.code);
+    expect(n.compiled.output.code).toBe(
+      '42;\n//# sourceMappingURL=data:application/json;base64,' +
+      'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
+      'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiNDIiXX0=\n');
   })
 
   it('automatically evaluates on request', function () {
