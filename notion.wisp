@@ -1,6 +1,5 @@
 (def ^:private ee2     (require "eventemitter2"))
 (def ^:private fs      (require "fs"))
-(def ^:private observ  (require "observ"))
 (def ^:private path    (require "path"))
 (def ^:private runtime (require "./runtime.js"))
 (def ^:private Q       (require "q"))
