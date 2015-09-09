@@ -13,15 +13,15 @@
 
 (defn make-notion
   " A Notion corresponds to a source code file;
-    it contains its contents, the result of its
-    transpilation to JavaScript, and the result
-    of its last evaluation.
+    besides the plain text of the source code it
+    also the result of its transpilation to JS,
+    and the result of its last evaluation.
 
     Passing a preloaded source is optional. "
   [notion-path source-text]
   (let [events      (ee2.EventEmitter2.)
         notion-path (or notion-path "")
-        pipeline    { :source   (if (string? source-text) source-text nil)
+        cache       { :source   (if (string? source-text) source-text nil)
                       :compiled nil
                       :value    nil }
         notion      { :type      "Notion"
@@ -33,7 +33,7 @@
                       :outdated  false
                       :parent    nil }]
 
-    (.map (keys pipeline) (add-observable-property!.bind nil notion pipeline))
+    (.map (keys cache) (add-observable-property!.bind nil notion cache))
 
     notion))
 
@@ -47,16 +47,15 @@
     :compiled compile
     :value    evaluate })
 
-(defn- add-observable-property! [notion pipeline i]
+(defn- add-observable-property! [notion cache i]
   (Object.define-property notion i
     { :configurable true
       :enumerable   true
-      :get (fn []
-             (if (nil? (aget pipeline i))
-               ((aget operations i) notion)
-               (aget pipeline i)))
+      :get (fn [] (if (nil? (aget cache i))
+             ((aget operations i) notion cache)
+             (aget cache i)))
       :set (fn [v]
-             (aset pipeline i v)
+             (aset cache i v)
              (notion.events.emit (aget event-names i) [notion v])) }))
 
 (defn- load [notion]
@@ -77,16 +76,19 @@
 
 (defn- evaluate
   " Evaluates the notion in a newly created context. "
-  [notion]
-  (if (and notion.source notion.compiled
-           notion.compiled.output notion.compiled.output.code)
-    (let [context (make-context notion)
-          value   (vm.run-in-context
-                    (runtime.wrap notion.compiled.output.code)
-                    context { :filename notion.name })]
-      (if context.error (throw context.error)
-      value))
-    undefined))
+  [notion cache]
+  (if cache.value
+    cache.value
+    (if (and notion.source notion.compiled
+             notion.compiled.output notion.compiled.output.code)
+      (let [context (make-context notion)
+            result  (vm.run-in-context
+                      (runtime.wrap notion.compiled.output.code)
+                      context { :filename notion.name })]
+        (if context.error (throw context.error))
+        (set! cache.value result)
+        result)
+      undefined)))
 
 (defn- make-context [notion]
   " Prepares an execution context with globals used by notions. 
