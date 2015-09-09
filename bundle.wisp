@@ -37,7 +37,7 @@
 
 (defn- get-next-notion [node notion path]
   (if (and node.parent (= node.parent.type "MemberExpression"))
-    (let [next-notion (tree.get-notion-by-path notion path)]
+    (let [next-notion (tree.resolve notion path)]
       (or next-notion false))))
 
 (defn- detected!
@@ -99,7 +99,7 @@
         full-to   (path.resolve full-from to)]
     (log.as :add-dep full-from full-to)
     (if (= -1 (deps.index-of full-to))
-      (let [dep (tree.get-notion-by-path from to)]
+      (let [dep (tree.resolve from to)]
         (if (not dep) (throw (Error.
           (str "No notion " to " (from " from.name ")"))))
         (deps.push full-to)

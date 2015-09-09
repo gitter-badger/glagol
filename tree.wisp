@@ -58,7 +58,7 @@
       (recur n.parent (conj n.name "/" p))
       (conj "/" p))))
 
-(defn get-notion-by-path [self target-path]
+(defn resolve [self target-path]
   ; doesn't work with parentless notions
   (if (not self.parent)
     (throw (Error. (str "can't use relative paths (such as " target-path
@@ -69,7 +69,7 @@
         first-token
           (aget split-path 0)]
 
-    (log.as :get-notion-by-path self.path target-path)
+    (log.as :resolve self.path target-path)
 
     (if (= -1 (.index-of ["" "." ".."] first-token))
       (throw (Error. (str
