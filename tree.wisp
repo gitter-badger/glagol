@@ -23,7 +23,7 @@
 (defn- load [n]
   (let [notions {}]
     (if (fs.exists-sync n.path) (do
-      (.map (ignore-files (glob.sync (path.join n.path "*")) { :nodir true })
+      (.map (ignore-files (glob.sync (path.join n.path "*") { :nodir true }))
         (fn [f] (let [f (notion.make-notion f)]
           (set! f.parent n) (aset notions f.name f))))
       (.map (ignore-files (glob.sync (path.join n.path "*" path.sep))) (fn [d]

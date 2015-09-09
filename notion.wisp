@@ -8,6 +8,9 @@
 (def ^:private util    (require "./util.wisp"))
 (def ^:private vm      (require "vm"))
 
+(def ^:private translate
+  (.-translate-identifier-word (require "wisp/backend/escodegen/writer.js")))
+
 (defn make-notion
   " A Notion corresponds to a source code file;
     it contains its contents, the result of its
@@ -43,6 +46,18 @@
   { :source   load
     :compiled compile
     :value    evaluate })
+
+(defn- add-observable-property! [notion pipeline i]
+  (Object.define-property notion i
+    { :configurable true
+      :enumerable   true
+      :get (fn []
+             (if (nil? (aget pipeline i))
+               ((aget operations i) notion)
+               (aget pipeline i)))
+      :set (fn [v]
+             (aset pipeline i v)
+             (notion.events.emit (aget event-names i) [notion v])) }))
 
 (defn- load [notion]
   (if notion.path
@@ -110,8 +125,7 @@
   (fn [] (get-tree n)))
 
 (defn- getter [n]
-  (fn [] (if (or (not n.evaluated) n.outdated) (evaluate n))
-         n.value))
+  (fn [] n.value))
 
 (defn- add-to-tree [cwd i n]
   (Object.define-property cwd (translate i)
@@ -136,26 +150,3 @@
             (add-to-tree cwd i n))))
         (if notion.parent (set! cwd.__ (get-tree notion.parent)))))
     cwd))
-
-(defn- add-observable-property! [notion pipeline i]
-  (Object.define-property notion i
-    { :configurable true
-      :enumerable   true
-      :get (fn []
-             (if (nil? (aget pipeline i))
-               ((aget operations i) notion)
-               (aget pipeline i)))
-      :set (fn [v]
-             (aset pipeline i v)
-             (notion.events.emit (aget event-names i) [notion v])) }))
-
-(defn load-notion
-  " Loads a notion from the specified path, and adds it to the watcher. "
-  [notion-path]
-  ;(log.as :load-notion notion-path)
-  (Q.Promise (fn [resolve reject]
-    (fs.read-file notion-path "utf-8" (fn [err src]
-      (if err (reject err) (resolve (make-notion notion-path src))))))))
-
-(def translate
-  (.-translate-identifier-word (require "wisp/backend/escodegen/writer.js")))
