@@ -47,5 +47,11 @@ describe('a notion directory', function () {
       , n2: null });
   })
 
+
+  it('sets a reference to itself in each contained object', function () {
+    expect(Object.keys(d.notions).every(hasParent)).toBe(true);
+    function hasParent (n) { return d.notions[n].parent === d };
+  })
+
 })
 

@@ -13,12 +13,12 @@ describe('a notion tree', function () {
     d = tree.makeNotionDirectory(root);
   })
 
-  it('for the root directory, __ is undefined', function () {
+  it('for the root directory has __ undefined', function () {
     var t = notion.getTree(d);
     expect(t.__).toBeUndefined();
   })
 
-  it('for non-root directory, __ points to parent', function () {
+  it('for non-root director has, __ pointing to parent', function () {
     var t1 = notion.getTree(d);
     var t2 = notion.getTree(d.notions['d1']);
     var t3 = notion.getTree(d.notions['d1'].notions['d12']);
@@ -27,7 +27,7 @@ describe('a notion tree', function () {
     expect(s(t3.__.__)).toEqual(s(t1));
   })
 
-  it('for any directory, _ points to self', function () {
+  it('for any directory has _ pointing to self', function () {
     var t1 = notion.getTree(d);
     var t2 = notion.getTree(d.notions['d1']);
     var t3 = notion.getTree(d.notions['d1'].notions['d12']);

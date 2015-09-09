@@ -11,20 +11,24 @@
 (defn make-notion-directory
   [dir]
   (let [dir   (path.resolve dir)
-        hindu (.watch (require "chokidar") dir)]
-    { :type    "NotionDirectory"
-      :name    (path.basename dir)
-      :path    dir
-      :notions (load dir)
-      :watcher (.watch (require "chokidar") dir) }))
+        hindu (.watch (require "chokidar") dir)
+        n     { :type    "NotionDirectory"
+                :name    (path.basename dir)
+                :path    dir
+                :notions []
+                :watcher (.watch (require "chokidar") dir) }]
+    (set! n.notions (load n))
+    n))
 
-(defn- load [dir]
+(defn- load [n]
   (let [notions {}]
-    (if (fs.exists-sync dir) (do
-      (.map (ignore-files (glob.sync (path.join dir "*")) { :nodir true })
-        (fn [f] (let [n (notion.make-notion f)] (aset notions n.name n))))
-      (.map (ignore-files (glob.sync (path.join dir "*" path.sep))) (fn [d]
-        (let [d (make-notion-directory d)] (aset notions d.name d))))))
+    (if (fs.exists-sync n.path) (do
+      (.map (ignore-files (glob.sync (path.join n.path "*")) { :nodir true })
+        (fn [f] (let [f (notion.make-notion f)]
+          (set! f.parent n) (aset notions f.name f))))
+      (.map (ignore-files (glob.sync (path.join n.path "*" path.sep))) (fn [d]
+        (let [d (make-notion-directory d)]
+          (set! d.parent n) (aset notions d.name d))))))
     notions))
 
 (defn- ignore-files
