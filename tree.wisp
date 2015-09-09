@@ -10,46 +10,21 @@
 
 (defn make-notion-directory
   [dir]
-  (let [d { :type    "NotionDirectory"
-            :name    (path.basename dir)
-            :path    dir
-            :watcher (.watch (require "chokidar") dir) }]
-    d))
+  (let [hindu (.watch (require "chokidar") dir)]
+    { :type    "NotionDirectory"
+      :name    (path.basename dir)
+      :path    dir
+      :notions (load dir)
+      :watcher (.watch (require "chokidar") dir) }))
 
-;(defn make-notion-directory
-  ;" Creates a new NotionDirectory - a structure which corresponds
-    ;to a filesystem directory and contains Notion references to its
-    ;contents; as well as to the corresponding parent NotionDirectory,
-    ;thus offering a view into the whole notion tree. "
-  ;[dir notion-list]
-  ;(let [notions    {}
-        ;notion-dir { :type    "NotionDirectory"
-                     ;:name    (path.basename dir)
-                     ;:path    dir
-                     ;:notions notions }]
-    ;(notion-list.map (fn [notion]
-      ;(set! notion.parent notion-dir)
-      ;(aset notions notion.name notion)))
-    ;notion-dir))
-
-(defn load-notion-directory
-  [dir]
-  (let [dir (path.resolve dir)]
-    (Q.Promise (fn [resolve reject]
-      (if (not (fs.exists-sync dir)) (reject (str dir " does not exist")))
-      (glob (path.join dir "*") {} (fn [err files]
-        (set! files (ignore-files files))
-        (if err (reject err))
-        (.then (Q.allSettled (files.map (fn [file]
-          (Q.Promise (fn [resolve reject]
-            (fs.stat file (fn [err stats]
-              (if err (reject err)
-                (resolve (if (stats.is-directory)
-                  (load-notion-directory file)
-                  (notion.load-notion file)) )))))))))
-          (fn [results] ; wtf
-            (resolve (make-notion-directory dir
-              (results.map #(.-value %1))))))))))))
+(defn- load [dir]
+  (let [notions {}]
+    (if (fs.exists-sync dir) (do
+      (.map (ignore-files (glob.sync (path.join dir "*")) { :nodir true })
+        (fn [f] (let [n (notion.make-notion f)] (aset notions n.name n))))
+      (.map (ignore-files (glob.sync (path.join dir "*" path.sep))) (fn [d]
+        (let [d (make-notion-directory d)] (aset notions d.name d))))))
+    notions))
 
 (defn- ignore-files
   [files]
