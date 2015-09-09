@@ -23,23 +23,17 @@ describe('an engine', function () {
     e = engine.start(root);
   })
 
-  it('is promised by engine.start', function () {
-    expect(e.then).toBeDefined();
+  it('is an object returned by engine.start', function () {
+    expect(typeof e).toBe('object');
   })
 
-  it('knows its root dir', function (done) {
-    e.then(function (state) {
-      expect(state.root).toBe(path.resolve(root));
-      done();
-    }).done();
+  it('knows its root dir', function () {
+    expect(e.root).toBe(path.resolve(root));
   })
 
-  it('has a root notion directory', function (done) {
-    e.then(function (state) {
-      expect(state.tree.type).toBe('NotionDirectory');
-      expect(state.tree.path).toBe(path.resolve(root));
-      done();
-    })
+  it('has a root notion directory', function () {
+    expect(e.tree.type).toBe('NotionDirectory');
+    expect(e.tree.path).toBe(path.resolve(root));
   })
 
 });
@@ -108,20 +102,17 @@ describe('a notion directory', function () {
   var d;
 
   beforeEach(function () {
-    d = tree.loadNotionDirectory(root);
+    d = tree.makeNotionDirectory(root);
   })
 
-  it('is promised by tree.load-notion-directory', function () {
-    expect(d.then).toBeDefined();
+  it('is an object returned by tree.make-notion-directory', function () {
+    expect(typeof d).toBe('object');
   })
 
-  it('knows its type, name, and path', function (done) {
-    d.then(function (state) {
-      expect(state.type).toBe('NotionDirectory');
-      expect(state.name).toBe(path.basename(root));
-      expect(state.path).toBe(path.resolve(root));
-      done();
-    })
+  it('knows its type, name, and path', function () {
+    expect(d.type).toBe('NotionDirectory');
+    expect(d.name).toBe(path.basename(root));
+    expect(d.path).toBe(path.resolve(root));
   })
 
   function compareNotionTree (notions, contents) {
@@ -137,11 +128,8 @@ describe('a notion directory', function () {
     });
   }
 
-  it('recursively loads its contents', function (done) {
-    d.then(function (state) {
-      compareNotionTree(state.notions, notionTree);
-      done();
-    })
+  it('recursively loads its contents', function () {
+    compareNotionTree(d.notions, notionTree);
   })
 
 })

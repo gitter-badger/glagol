@@ -10,7 +10,8 @@
 
 (defn make-notion-directory
   [dir]
-  (let [hindu (.watch (require "chokidar") dir)]
+  (let [dir   (path.resolve dir)
+        hindu (.watch (require "chokidar") dir)]
     { :type    "NotionDirectory"
       :name    (path.basename dir)
       :path    dir
