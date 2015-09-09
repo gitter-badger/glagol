@@ -3,8 +3,7 @@
 var chokidar = require('chokidar')
   , fs       = require('fs')
   , path     = require('path')
-  , runtime  = require('../runtime.js')
-  , engine   = runtime.requireWisp('../engine.wisp');
+  , runtime  = require('../runtime.js');
 
 require('keypress')(process.stdin);
 
@@ -55,8 +54,8 @@ if (process.argv.length <= 2) {
 
   }
 
-  engine.start(rootDir).then(function (state) {
-    engine.tree.descend(state.tree, path.relative(rootDir, entryPath)).value;
-  }).done();
+  var engine = runtime.requireWisp('../engine.wisp').start(rootDir);
+  runtime.requireWisp('../tree.wisp').descend(
+    engine.tree, path.relative(rootDir, entryPath)).value;
 
 }

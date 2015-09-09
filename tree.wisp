@@ -9,20 +9,28 @@
 ;;; directory constructor, loader, and serializer
 
 (defn make-notion-directory
-  " Creates a new NotionDirectory - a structure which corresponds
-    to a filesystem directory and contains Notion references to its
-    contents; as well as to the corresponding parent NotionDirectory,
-    thus offering a view into the whole notion tree. "
-  [dir notion-list]
-  (let [notions    {}
-        notion-dir { :type    "NotionDirectory"
-                     :name    (path.basename dir)
-                     :path    dir
-                     :notions notions }]
-    (notion-list.map (fn [notion]
-      (set! notion.parent notion-dir)
-      (aset notions notion.name notion)))
-    notion-dir))
+  [dir]
+  (let [d { :type    "NotionDirectory"
+            :name    (path.basename dir)
+            :path    dir
+            :watcher (.watch (require "chokidar") dir) }]
+    d))
+
+;(defn make-notion-directory
+  ;" Creates a new NotionDirectory - a structure which corresponds
+    ;to a filesystem directory and contains Notion references to its
+    ;contents; as well as to the corresponding parent NotionDirectory,
+    ;thus offering a view into the whole notion tree. "
+  ;[dir notion-list]
+  ;(let [notions    {}
+        ;notion-dir { :type    "NotionDirectory"
+                     ;:name    (path.basename dir)
+                     ;:path    dir
+                     ;:notions notions }]
+    ;(notion-list.map (fn [notion]
+      ;(set! notion.parent notion-dir)
+      ;(aset notions notion.name notion)))
+    ;notion-dir))
 
 (defn load-notion-directory
   [dir]
@@ -42,20 +50,6 @@
           (fn [results] ; wtf
             (resolve (make-notion-directory dir
               (results.map #(.-value %1))))))))))))
-
-(defn freeze-notion-directory
-  " Returns a static snapshot of all loaded notions. "
-  []
-  (let [snapshot {}]
-    (.map (keys NOTIONS) (fn [i]
-      (let [frozen (freeze-notion (aget NOTIONS i))]
-        (aset snapshot i frozen))))
-    snapshot)
-    (= notion.type "NotionDirectory")
-      { :name      notion.name
-        :type      "NotionDirectory"
-        :path      (path.relative root-dir notion.path)
-        :timestamp (Math.floor (Date.now)) })
 
 (defn- ignore-files
   [files]

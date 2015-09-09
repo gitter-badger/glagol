@@ -34,17 +34,17 @@
 
     notion))
 
-(def ^:private pipeline-event-names
+(def ^:private event-names
   { :source   :loaded
     :compiled :compiled
     :value    :evaluated })
 
-(def ^:private pipeline-operations
-  { :source   read
+(def ^:private operations
+  { :source   load
     :compiled compile
     :value    evaluate })
 
-(defn- read [notion]
+(defn- load [notion]
   (if notion.path
     (let [source (fs.read-file-sync notion.path :utf8)]
       (set! notion.source source)
@@ -143,11 +143,11 @@
       :enumerable   true
       :get (fn []
              (if (nil? (aget pipeline i))
-               ((aget pipeline-operations i) notion)
+               ((aget operations i) notion)
                (aget pipeline i)))
       :set (fn [v]
              (aset pipeline i v)
-             (notion.events.emit (aget pipeline-event-names i) [notion v])) }))
+             (notion.events.emit (aget event-names i) [notion v])) }))
 
 (defn load-notion
   " Loads a notion from the specified path, and adds it to the watcher. "

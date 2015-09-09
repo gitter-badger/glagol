@@ -15,23 +15,20 @@
 
 (defn start
   " Starts up the engine in a specified root directory. "
-  ([dir] (start dir {}))
+  ([dir]
+    (start dir {}))
   ([dir opts]
-    (let [dir
-            (path.resolve dir)
-          log
-            (logging.get-logger "engine")
-          state
-            { :root    dir
-              :tree    nil
-              :watcher nil }]
-      (-> (tree.load-notion-directory dir)
-        (.then (fn [root-notion]
-          (set! state.tree root-notion)
-          (set! state.watcher (.watch (require "chokidar") ""))
-          (watch-recursive state.watcher root-notion)
-          (if opts.verbose (log.as :loaded-notion-tree root-notion))
-          state))))))
+    { :root    (path.resolve dir)
+      :tree    (tree.make-notion-directory dir)
+      :watcher nil }))
+
+      ;(-> (tree.load-notion-directory dir)
+        ;(.then (fn [root-notion]
+          ;(set! state.tree root-notion)
+          ;(set! state.watcher (.watch (require "chokidar") ""))
+          ;(watch-recursive state.watcher root-notion)
+          ;(if opts.verbose (log.as :loaded-notion-tree root-notion))
+          ;state))))))
 
 (defn watch-recursive [watcher n]
   (cond
