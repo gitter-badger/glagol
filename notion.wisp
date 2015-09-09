@@ -1,9 +1,12 @@
+(def ^:private colors  (require "colors/safe"))
 (def ^:private ee2     (require "eventemitter2"))
 (def ^:private fs      (require "fs"))
+(def ^:private logging (require "etude-logging"))
 (def ^:private path    (require "path"))
 (def ^:private runtime (require "./runtime.js"))
 (def ^:private Q       (require "q"))
 (def ^:private util    (require "./util.wisp"))
+(def ^:private vm      (require "vm"))
 
 (defn make-notion
   " A Notion corresponds to a source code file;
@@ -39,7 +42,7 @@
 (def ^:private pipeline-operations
   { :source   read-notion-sync!
     :compiled compile-notion-sync!
-    :value    (fn []) })
+    :value    evaluate-notion-sync! })
 
 (defn- read-notion-sync! [notion]
   (if notion.path
@@ -57,7 +60,7 @@
       compiled)
     {}))
 
-(defn evaluate-notion-sync!
+(defn- evaluate-notion-sync!
   " Evaluates the notion in a newly created context. "
   [notion]
   (if (and notion.source notion.compiled
@@ -69,6 +72,70 @@
       (if context.error (throw context.error)
       value))
     undefined))
+
+(defn- make-notion-context [notion]
+  " Prepares an execution context with globals used by notions. 
+
+    Can't assoc context because the resulting object is uncontextified,
+    so we rely on our good old friend imperative set! to add some
+    notion-specific globals to each notion's VM execution context. "
+  (let [context (runtime.make-context notion.path)]
+    (set! context.process.cwd (fn [] (path.dirname notion.path)))
+    (set! context.log  (logging.get-logger (str (colors.bold "@") notion.name)))
+    (set! context.self notion)
+    (set! context._    (get-notion-tree notion))
+    (set! context.__   (aget (get-notion-tree notion) :__))
+    context))
+
+(defn- notion-setter [i n]
+  (fn [args]
+    (if (not (vector? args)) (throw (Error. (str
+        "pass a [operation arg1 arg2 ... argN] vector "
+        "when writing to a notion"))))
+      (let [operation (aget args 0)]
+        (cond
+          (= operation :watch)
+            (cond
+              (= n.type "Notion")
+                (n.value (aget args 1))
+              (= n.type "NotionDirectory")
+                (.map (keys n.notions) (fn [i]
+                  (.value (aget n.notions i) (aget args 1)))))
+          :else (throw (Error. (str
+            operation " is not a valid operation, "
+            "unlike :watch"))))
+        nil)))
+
+(defn- notion-dir-getter [n]
+  (fn [] (get-notion-tree n)))
+
+(defn- notion-getter [n]
+  (fn [] (if (or (not n.evaluated) n.outdated) (evaluate-notion-sync n))
+         (n.value)))
+
+(defn- add-to-tree [cwd i n]
+  (Object.define-property cwd (translate i)
+    { :configurable true :enumerable true
+      :get (cond
+        (= n.type "Notion")          (notion-getter n)
+        (= n.type "NotionDirectory") (notion-dir-getter n))
+      :set (notion-setter i n) }))
+
+(defn get-notion-tree
+  " From file, . points to parent and .. to grandparent;
+    from dir, .. points to parent and . to self. "
+  [notion]
+  (let [cwd {}]
+    (cond
+      (and (= notion.type "Notion") notion.parent)
+        (set! cwd (get-notion-tree notion.parent))
+      (= notion.type "NotionDirectory") (do
+        (set! cwd._ cwd)
+        (.map (keys notion.notions) (fn [i]
+          (let [n (aget notion.notions i)]
+            (add-to-tree cwd i n))))
+        (if notion.parent (set! cwd.__ (get-notion-tree notion.parent)))))
+    cwd))
 
 (defn- add-observable-property! [notion pipeline i]
   (Object.define-property notion i
