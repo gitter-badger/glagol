@@ -15,9 +15,12 @@
         n     { :type    "NotionDirectory"
                 :name    (path.basename dir)
                 :path    dir
-                :notions []
-                :watcher (.watch (require "chokidar") dir) }]
+                :notions {}
+                :watcher (.watch (require "chokidar") dir { :depth 0 }) }]
     (set! n.notions (load n))
+    (n.watcher.on "change" (fn [file]
+      (let [changed (aget n.notions (path.basename file))]
+        (.map [:source :compiled :value] #(aset changed._cache %1 nil)))))
     n))
 
 (defn- load [n]

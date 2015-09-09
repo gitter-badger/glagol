@@ -29,9 +29,8 @@
                       :name      (path.basename notion-path)
                       :events    events
                       :requires  []
-                      :evaluated false
-                      :outdated  false
-                      :parent    nil }]
+                      :parent    nil
+                      :_cache    cache }]
 
     (.map (keys cache) (add-observable-property!.bind nil notion cache))
 
@@ -52,7 +51,7 @@
     { :configurable true
       :enumerable   true
       :get (fn [] (if (nil? (aget cache i))
-             ((aget operations i) notion cache)
+             ((aget operations i) notion)
              (aget cache i)))
       :set (fn [v]
              (aset cache i v)
@@ -76,9 +75,9 @@
 
 (defn- evaluate
   " Evaluates the notion in a newly created context. "
-  [notion cache]
-  (if cache.value
-    cache.value
+  [notion]
+  (if notion._cache.value
+    notion._cache.value
     (if (and notion.source notion.compiled
              notion.compiled.output notion.compiled.output.code)
       (let [context (make-context notion)
@@ -86,7 +85,7 @@
                       (runtime.wrap notion.compiled.output.code)
                       context { :filename notion.name })]
         (if context.error (throw context.error))
-        (set! cache.value result)
+        (set! notion._cache.value result)
         result)
       undefined)))
 

@@ -46,9 +46,6 @@ describe('a notion', function () {
 
   it('automatically compiles on request', function () {
     var n = notion.makeNotion('', '42');
-    expect(n.compiled).toBeDefined();
-    expect(n.compiled).not.toBeNull();
-    expect(n.compiled.output).toBeDefined();
     expect(n.compiled.output.code).toBe(
       '42;\n//# sourceMappingURL=data:application/json;base64,' +
       'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
@@ -59,6 +56,17 @@ describe('a notion', function () {
     var n = notion.makeNotion('', '42');
     expect(n.value).toBe(42);
   })
+
+  it('automatically recompiles and re-evaluates when its source is changed',
+    function () {
+      var n = notion.makeNotion('', '42');
+      n.source = '23';
+      expect(n.compiled.output.code).toBe( // TODO
+        '23;\n//# sourceMappingURL=data:application/json;base64,' +
+        'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
+        'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiMjMiXX0=');
+      expect(n.value).toBe(23);
+    });
 
 })
 
