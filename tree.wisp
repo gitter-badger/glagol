@@ -39,7 +39,7 @@
                 (resolve (if (stats.is-directory)
                   (load-notion-directory file)
                   (notion.load-notion file)) )))))))))
-          (fn [results]
+          (fn [results] ; wtf
             (resolve (make-notion-directory dir
               (results.map #(.-value %1))))))))))))
 

@@ -56,18 +56,7 @@ if (process.argv.length <= 2) {
   }
 
   engine.start(rootDir).then(function (state) {
-    var entryNotion =
-      engine.tree.descend(state.tree, path.relative(rootDir, entryPath));
-
-    entryNotion.value;
-
-    var watcher = chokidar.watch(entryPath, { persistent: true });
-
-    watcher.on('change', function (path) {
-      if (entryPoint.value().undo) entryPoint.value().undo();
-      entryPoint.outdated = true;
-      engine.compile.evaluateNotionSync(entryPoint);
-    });
+    engine.tree.descend(state.tree, path.relative(rootDir, entryPath)).value;
   }).done();
 
 }

@@ -156,7 +156,7 @@ describe('a notion tree', function () {
 
   it('for the root directory, __ is undefined', function (done) {
     d.then(function (state) {
-      var t = notion.getNotionTree(state);
+      var t = notion.getTree(state);
       expect(t.__).toBeUndefined();
       done();
     })
@@ -164,9 +164,9 @@ describe('a notion tree', function () {
 
   it('for non-root directory, __ points to parent', function (done) {
     d.then(function (state) {
-      var t1 = notion.getNotionTree(state);
-      var t2 = notion.getNotionTree(state.notions['d1']);
-      var t3 = notion.getNotionTree(state.notions['d1'].notions['d12']);
+      var t1 = notion.getTree(state);
+      var t2 = notion.getTree(state.notions['d1']);
+      var t3 = notion.getTree(state.notions['d1'].notions['d12']);
       expect(s(t2.__)).toEqual(s(t1));
       expect(s(t3.__)).toEqual(s(t2));
       expect(s(t3.__.__)).toEqual(s(t1));
@@ -176,9 +176,9 @@ describe('a notion tree', function () {
 
   it('for any directory, _ points to self', function (done) {
     d.then(function (state) {
-      var t1 = notion.getNotionTree(state);
-      var t2 = notion.getNotionTree(state.notions['d1']);
-      var t3 = notion.getNotionTree(state.notions['d1'].notions['d12']);
+      var t1 = notion.getTree(state);
+      var t2 = notion.getTree(state.notions['d1']);
+      var t3 = notion.getTree(state.notions['d1'].notions['d12']);
       expect(t1._).toBe(t1)
       expect(t2._).toBe(t2);
       expect(t3._).toBe(t3);
