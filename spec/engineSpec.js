@@ -1,6 +1,5 @@
 var runtime = require('../runtime.js')
   , engine  = runtime.requireWisp('../engine.wisp')
-  , compile = engine.compile
   , tree    = engine.tree
   , notion  = engine.notion
   , fs      = require('fs')
@@ -91,7 +90,6 @@ describe('a notion', function () {
     expect(n.compiled).toBeDefined();
     expect(n.compiled).not.toBeNull();
     expect(n.compiled.output).toBeDefined();
-    fs.writeFileSync('foo', n.compiled.output.code);
     expect(n.compiled.output.code).toBe(
       '42;\n//# sourceMappingURL=data:application/json;base64,' +
       'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
@@ -158,7 +156,7 @@ describe('a notion tree', function () {
 
   it('for the root directory, __ is undefined', function (done) {
     d.then(function (state) {
-      var t = compile.getNotionTree(state);
+      var t = notion.getNotionTree(state);
       expect(t.__).toBeUndefined();
       done();
     })
@@ -166,9 +164,9 @@ describe('a notion tree', function () {
 
   it('for non-root directory, __ points to parent', function (done) {
     d.then(function (state) {
-      var t1 = compile.getNotionTree(state);
-      var t2 = compile.getNotionTree(state.notions['d1']);
-      var t3 = compile.getNotionTree(state.notions['d1'].notions['d12']);
+      var t1 = notion.getNotionTree(state);
+      var t2 = notion.getNotionTree(state.notions['d1']);
+      var t3 = notion.getNotionTree(state.notions['d1'].notions['d12']);
       expect(s(t2.__)).toEqual(s(t1));
       expect(s(t3.__)).toEqual(s(t2));
       expect(s(t3.__.__)).toEqual(s(t1));
@@ -178,9 +176,9 @@ describe('a notion tree', function () {
 
   it('for any directory, _ points to self', function (done) {
     d.then(function (state) {
-      var t1 = compile.getNotionTree(state);
-      var t2 = compile.getNotionTree(state.notions['d1']);
-      var t3 = compile.getNotionTree(state.notions['d1'].notions['d12']);
+      var t1 = notion.getNotionTree(state);
+      var t2 = notion.getNotionTree(state.notions['d1']);
+      var t3 = notion.getNotionTree(state.notions['d1'].notions['d12']);
       expect(t1._).toBe(t1)
       expect(t2._).toBe(t2);
       expect(t3._).toBe(t3);

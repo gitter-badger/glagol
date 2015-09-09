@@ -9,7 +9,6 @@
 (def ^:private url       (require "url"))
 (def ^:private vm        (require "vm"))
 
-(def compile (require "./compile.wisp"))
 (def notion  (require "./notion.wisp"))
 (def runtime (require "./runtime.js"))
 (def tree    (require "./tree.wisp"))
