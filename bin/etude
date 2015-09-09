@@ -56,18 +56,18 @@ if (process.argv.length <= 2) {
   }
 
   engine.start(rootDir).then(function (state) {
-    if (entryPath) {
-      var entryPoint = engine.compile.evaluateNotionSync(
-        engine.tree.descend(state.tree, path.relative(rootDir, entryPath)));
+    var entryNotion =
+      engine.tree.descend(state.tree, path.relative(rootDir, entryPath));
 
-      var watcher = chokidar.watch(entryPath, { persistent: true });
+    entryNotion.value;
 
-      watcher.on('change', function (path) {
-        if (entryPoint.value().undo) entryPoint.value().undo();
-        entryPoint.outdated = true;
-        engine.compile.evaluateNotionSync(entryPoint);
-      });
-    }
+    var watcher = chokidar.watch(entryPath, { persistent: true });
+
+    watcher.on('change', function (path) {
+      if (entryPoint.value().undo) entryPoint.value().undo();
+      entryPoint.outdated = true;
+      engine.compile.evaluateNotionSync(entryPoint);
+    });
   }).done();
 
 }
