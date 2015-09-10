@@ -78,6 +78,9 @@ function compileSource (source, filename, raw) {
   var options = { 'source-uri': filename || "<???>" , 'source': source }
     , output  = wisp.compiler.generate.bind(null, options)
                   .apply(null, processed.ast);
+  if (output.error) {
+    throw new Error("Compile error in " + filename + ": " + processed.error)
+  }
 
   return { forms: forms, processed: processed, output: output }
 }
