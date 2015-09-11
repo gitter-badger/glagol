@@ -117,16 +117,20 @@ function makeContext (filename, elevated) {
   _require.main = require.main;
 
   var context =
-    { exports:      {}
-    , __dirname:    path.dirname(filename)
-    , __filename:   filename
-    , log:          logging.getLogger(path.basename(filename))
-    , use:          requireWisp
-    , process:      { cwd:   process.cwd()
-                    , stdin: process.stdin
-                    , exit:  process.exit }
-    , isInstanceOf: function (type, obj) { return obj instanceof type }
-    , require:      _require };
+    { exports:       {}
+    , __dirname:     path.dirname(filename)
+    , __filename:    filename
+    , log:           logging.getLogger(path.basename(filename))
+    , use:           requireWisp
+    , process:       { cwd:   process.cwd()
+                     , stdin: process.stdin
+                     , exit:  process.exit }
+    , setTimeout:    setTimeout
+    , clearTimeout:  clearTimeout
+    , setInterval:   setInterval
+    , clearInterval: clearInterval
+    , isInstanceOf:  function (type, obj) { return obj instanceof type }
+    , require:       _require };
 
   if (elevated) {
     context.process = process;
