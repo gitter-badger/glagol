@@ -62,6 +62,10 @@ for you.
 
 All that said, **please stay tuned!** Etude is a work in progress. A 0.1.0
 release is now just about imminent. It would still suffer from the current lack
-of sensible error messaging, and half of the time an exception occurs you're
-given way too little information. Oh and brave traveller, if you happen to be
+of sensible error messaging, and half of the time an exception occurs you would
+be given way too little information, but it would otherwise still do its thing
+ust fine. I'm kind of racing against my patience here since I don't have nearly
+enough manhours on hand and I want to see it doing real world stuff that I would
+know it is not a pipe dream which is why I still haven't fixed error reporting.
+Another set of eyeballs would sure help. So brave traveller, if you happen to be
 brave enough to poke around the code here and there, lemme hear about it!
