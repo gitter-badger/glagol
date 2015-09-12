@@ -122,9 +122,11 @@ function makeContext (filename, elevated) {
     , __filename:    filename
     , log:           logging.getLogger(path.basename(filename))
     , use:           requireWisp
-    , process:       { cwd:   process.cwd()
-                     , stdin: process.stdin
-                     , exit:  process.exit }
+    , process:       { cwd:    process.cwd
+                     , stdin:  process.stdin
+                     , stdout: process.stdout
+                     , stderr: process.stderr
+                     , exit:   process.exit }
     , setTimeout:    setTimeout
     , clearTimeout:  clearTimeout
     , setInterval:   setInterval
