@@ -1,0 +1,53 @@
+# Etude
+
+**Etude** is a framework for live coding of interactive applications.
+
+Etude implements a lightweight microservice architecture, aiming to become a
+building block for highly scriptable and modifiable Internet-powered interactive
+software, such as needed for e.g. real-time multimedia composition and
+performance.
+
+Etude's fundamental building block is called a Notion. Each notion directly
+corresponds to a file in your application's source code tree; having read it
+from disk, preprocesses it, evaluates it code, and exports the resulting value
+as a public API endpoint, accessible from neighbouring notions via a familiar
+path-like syntax. Whenever the file contents change, the notion is reloaded,
+returning the updated value the next time it is requested.
+
+Currently, each notion executes in a somewhat isolated context of its own within
+a single JS VM instance (such as a Node.js process, or a browser tab); an
+(upcoming) language- and platform-agnostic VFS-based API intends to make
+distributed Etude instances work seamlessly with each other across protocols
+such as file IO, HTTP, WebSockets, UDP, 9P, OSC, MIDI.
+
+A notion can export any JS value - from a simple primitive such as the value of
+a single configuration setting, to an object of functions that implement a
+mini-library. Organizing your application by putting one logically discrete unit
+of code into each file, rather than grouping multiple thematically related
+declarations into a few large files, this brings improved visibility of the
+actual application structure and reduces the chance of circular references.
+
+Most importantly, having one thing per file makes it trivial for Etude to know
+when you change anything in the source code. Then it does its best to update the
+running program on the fly. To help it do that, you need to stick to a
+functional programming mindset: think of your program's control flow as a series
+of data transforms rather than a sequence of imperative instructions, minimize
+and centralize side effects, and aim to write as much pure and/or idempotent
+code as possible; in return, you get hassle-free rapid application development.
+
+Etude is even (going to be) able to do this in reverse, and automatically
+rewrite source code files in response to changes to the application state; thus
+blurring the line between code and data, any software built with Etude gets an
+all-powerful scripting system for free. For example, users of a multimedia
+package, or other domain-specific software, would now be able to implement
+arbitrarily complex instructions in their projects, disregarding the
+restrictions of any pre-defined GUI, and end up with project files that can be
+version-controlled and human-reviwed, unlike the binary files of most current-
+generation domain-specific software.
+
+Etude is a work in progress. A 0.1.0 release is now just about imminent. In
+order to check out the _really_ cool things that Etude can leverage other
+software to do by being _so_ damn in tune with the spirit of Unix philosophy,
+you should have a look at one of the example projects that I'm also cooking up
+for you. Stay tuned! Oh and brave traveller, if you're happen to be brave
+enough to poke around the code here and there, lemme hear.
