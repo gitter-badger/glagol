@@ -1,14 +1,34 @@
+/* **runtime.md** is currently the only **JavaScript** file of the core bunch.
+   It contains a few basic functions that allow for bootstrapping into a state
+   that is able to execute [Wisp](./wisp.md) code that is itself compiled at
+   runtime, furthemore without using the ominously yet unexplainedly deprecated
+   [require.extensions](https://nodejs.org/api/all.html#all_require_extensions).
+
+   I am not sure at all what happens with Wisp namespace imports (TODO: check).
+   Everything works just swimmingly over plain Node `require`s; it's a little
+   too cumbersome to type out the `(def ^:private library (require "library"))`
+   but a `(def-` is just one patch away in one subsequent section of this file.
+
+   Let's state it loud and clear what we can offer the world: */
+
 module.exports =
   { compileSource: compileSource
   , makeContext:   makeContext
   , requireWisp:   requireWisp
   , wrap:          wrap };
 
+/* And here's what we don't tell 'em we need for that: */
+
 var fs      = require('fs')
-  , logging = require('etude-logging')
   , path    = require('path')
   , resolve = require('resolve')
   , vm      = require('vm');
+
+/* Including a logger from [etude-logging](github.com/egasimus/etude-logging) */
+var logging = require('etude-logging')
+  , log = logging.getLogger('runtime');
+
+/* And, most notably, most of Wisp: ... */
 
 var wisp = module.exports.wisp =
   { ast:      require('wisp/ast.js')
@@ -18,11 +38,37 @@ var wisp = module.exports.wisp =
   , sequence: require('wisp/sequence.js')
   , string:   require('wisp/string.js')};
 
-// here's a logger
-var log = logging.getLogger('runtime');
+/* First thing we do before being asked to compile any Wisp yet,
+   is install a few compiler hacks that I'd like to be available
+   everywhere throughout the runtime environment and haven't yet
+   beel cleanly implemented from Wisp.
 
-// add arrow macro from https://github.com/gozala/wisp#another-macro-example
-// TODO make it work with (fn []) ?
+   Some of these might constitute suggested future patches to
+   the main [Wisp](https://github.com/Gozala/wisp) codebase. (TODO: check)
+
+   For example, we enable the arrow macro, which threads
+   an argument through nested functions like this:
+
+   > (-> a (b) (c 2) (d a)) ===>
+       (d a (c 2 (b a)))
+
+   This is being done all on the lexical level so don't
+   expect it to be as clever as you don't need to be really.
+   E.g. a lambda would need to be wrapped in double skobki
+   which is ugly but works in a pinch, especially if you end up
+   cramming half a library into that lambda:
+
+   > (-> 2 ((fn [x] (+ x 2))) ((fn [x] (str x " oz")))) ===>
+       ((fn [x] (str x " oz") ((fn [x] (+ x 2)) 2))
+
+     ; 4oz
+
+   The following implementation of the arrow "native" macro is taken
+   directly from [Wisp docs](https://github.com/Gozala/wisp/blob/master/Readme.md#another-macro-example)
+   and rewritten into JavaScript using some of [Wisp's sequence functions](https://github.com/Gozala/wisp/blob/master/src/sequence.wisp),
+   which are modeled after Clojure's and implement soft immutability simply --
+   by avoiding to modify things in place. */
+
 wisp.expander.installMacro("->", function to () {
   var operations = Array.prototype.slice.call(arguments, 0);
   var s = wisp.sequence;
@@ -31,25 +77,53 @@ wisp.expander.installMacro("->", function to () {
   }, s.first(operations), s.rest(operations));
 });
 
+/* Wrapped in an immediately called local function so as not to pollute
+   the namespace, here go these wretched writer monkeypatches: */
+
 (function () {
-  // writer monkeypatches
-  // TODO contribute to upstream
   var _writer = require('wisp/backend/escodegen/writer.js');
 
-  // patch translate-identifier-word to translate
-  // slashes into nested namespace references
-  // TODO if this is disabled, why does it work?
+/* By default, Wisp translates `(foo/bar/baz)` (a namespaced function call,
+   with the `/` being roughly equivalent to a JS `.`, only with nested
+   namespaces -- something that neither Wisp nor IIRC Clojure support --
+   to the nonsencical `foo.bar/baz`. The following patch makes it produce
+   the more consistent result `foo.bar.baz`, which accidentally is perfect
+   for implementing a file tree equivalent for each Notion. 
+
+   This is how in a Notion the identifier `../options/setting` is made to
+   return the value of the notion at the corresponding filesystem path,
+   relative to the calling notion. Note that only the language construct is
+   available runtime-wide; the functionality is not available from non-Notion
+   code (basically any code that comes into being by being `require`d). 
+
+   Strangely enough it also seems to be a magic/more magic switch, since to
+   the cursory inspection the function seems to be doing nothing, yet things
+   seemed to break last time I messed with it. TODO: check */
+
   var _translate = _writer.translateIdentifierWord;
   _writer.translateIdentifierWord = function () {
     var id = _translate.apply(null, arguments);
-    //log(arguments[0], '=>', id);
     return id;
-    //return id.split('/').join('._.');
   }
 
-  // patch write-def to write private functions as
-  // `function x () {}` rather than `var x = function x () {}`
-  // TODO 'originam-form' should be 'original-form' in the originam code
+/* And this gets rid of an unnecessary limitation in function declaration order.
+   It changes the way Wisp compiled (fn foo [] :bar) top-level local functions;
+   the `var ...` part in `var foo = function foo () { return "bar" }` is not
+   really necessary, but when present it prevents local functions from seeing
+   things declared either before or after them; also themselves, which used to
+   make recursion painful.
+
+   A similar patch is likely needed for locals since, in the following code:
+   `(let [foo (fn foo [] (foo))])`, `foo` cannot actually call itself.
+   So you can see the following workaround in some places:
+   `(let [foo nil] (set! foo (fn [] (foo))))`. TODO
+
+   This is also where the `(def-` patch shorthand for `(def ^:private`
+   should probably go in. TODO
+
+   There's also a typo carried over from upstream: `originam-form` should
+   instead be `original-form` in the originam code. TODO upstream PR */
+
   var _writeDef = _writer.writeDef;
   _writer.__writers__.def = _writer.writeDef = function (form) {
     var isPrivateDefn = form.init.op === 'fn' && !form.export;;
