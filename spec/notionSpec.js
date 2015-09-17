@@ -64,7 +64,7 @@ describe('a notion', function () {
       expect(n.compiled.output.code).toBe( // TODO
         '23;\n//# sourceMappingURL=data:application/json;base64,' +
         'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
-        'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiMjMiXX0=');
+        'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiMjMiXX0=\n');
       expect(n.value).toBe(23);
     });
 

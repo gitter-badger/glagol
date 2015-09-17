@@ -9,7 +9,7 @@ enough to run a single-page Web application, yet flexible enough to fit
 around the high-level parts of a digital audio workstation, because those
 things are what I'll be using it for.
 
-**Etude implements what looks to me like a lightweight microservice architecture.**
+**Etude implements a lightweight nanoservice architecture.**
 Etude's fundamental building block is called a Notion. Each notion directly
 corresponds to a file in your application's source code tree; having read it
 from disk, preprocesses it, evaluates it code, and exports the resulting value
