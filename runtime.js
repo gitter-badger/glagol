@@ -235,14 +235,6 @@ function requireWisp (name, raw, elevated) {
   var basedir  = path.dirname(require('resolve/lib/caller.js')())
     , filename = resolve.sync(name, { extensions: [".wisp"], basedir: basedir })
 
-  // HACK: require calls to different locations of engine.wisp returns
-  // different instances of the module -- which, however, is stateful;
-  // and the state is missing everywhere except the original location.
-  // currently, all instances of the `etude-engine` module are symlinks
-  // to the same location, so a call to realpath(2) will give us the
-  // correct cache key. however, the existence of this issue means that
-  // engine should either not be a stateful module or store its state
-  // globally or something.
   filename = fs.realpathSync(filename);
 
   if (!cache[filename]) {

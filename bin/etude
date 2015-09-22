@@ -3,7 +3,7 @@
 var chokidar = require('chokidar')
   , fs       = require('fs')
   , path     = require('path')
-  , runtime  = require('../runtime.js');
+  , engine   = require('..');
 
 require('keypress')(process.stdin);
 
@@ -54,8 +54,7 @@ if (process.argv.length <= 2) {
 
   }
 
-  var engine = runtime.requireWisp('../engine.wisp').start(rootDir);
-  runtime.requireWisp('../tree.wisp').descend(
-    engine.tree, path.relative(rootDir, entryPath)).value;
+  var root = engine.tree.makeNotionDirectory(rootDir);
+  engine.tree.descend(root, path.relative(rootDir, entryPath)).value;
 
 }

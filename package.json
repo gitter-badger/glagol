@@ -2,7 +2,7 @@
   "name": "etude-engine",
   "version": "0.0.0",
   "description": "",
-  "main": "engine.wisp",
+  "main": "index.js",
   "scripts": {
     "test": "node_modules/jasmine/bin/jasmine.js"
   },

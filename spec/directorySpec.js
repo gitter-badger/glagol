@@ -1,6 +1,5 @@
-var runtime = require('../runtime.js')
-  , engine  = runtime.requireWisp('../engine.wisp')
-  , tree    = engine.tree
+var runtime = require('..').runtime
+  , tree    = require('..').tree
   , path    = require('path');
 
 var root = './spec/sample';

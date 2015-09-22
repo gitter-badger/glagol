@@ -1,6 +1,5 @@
-var runtime = require('../runtime.js')
-  , engine  = runtime.requireWisp('../engine.wisp')
-  , notion  = engine.notion
+var runtime = require('..').runtime
+  , notion  = require('..').notion
   , fs      = require('fs');
 
 describe('a notion', function () {

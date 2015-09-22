@@ -1,5 +1,5 @@
 var runtime = require('../runtime.js')
-  , engine  = runtime.requireWisp('../engine.wisp')
+  , engine  = require('..')
   , notion  = engine.notion
   , tree    = engine.tree;
 
