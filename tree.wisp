@@ -1,4 +1,4 @@
-;(def ^:private compiler (require "./compile"))
+(def ^:private chokidar (require "chokidar"))
 (def ^:private fs       (require "fs"))
 (def ^:private glob     (require "glob"))
 (def ^:private is-equal (.-is-equal (require "wisp/runtime")))
@@ -12,7 +12,7 @@
   [dir & opts]
   (let [dir   (path.resolve dir)
         watch (= -1 (opts.index-of :nowatch))
-        hindu (if watch (.watch (require "chokidar") dir { :depth 0 }))
+        hindu (if watch (chokidar.watch dir { :depth 0 :persistent false}))
         n     { :type    "NotionDirectory"
                 :name    (path.basename dir)
                 :path    dir
