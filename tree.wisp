@@ -9,18 +9,19 @@
 ;;; directory constructor, loader, and serializer
 
 (defn make-notion-directory
-  [dir]
+  [dir & opts]
   (let [dir   (path.resolve dir)
-        hindu (.watch (require "chokidar") dir)
+        watch (= -1 (opts.index-of :nowatch))
+        hindu (if watch (.watch (require "chokidar") dir { :depth 0 }))
         n     { :type    "NotionDirectory"
                 :name    (path.basename dir)
                 :path    dir
                 :notions {}
-                :watcher (.watch (require "chokidar") dir { :depth 0 }) }]
+                :watcher hindu }]
     (set! n.notions (load n))
-    (n.watcher.on "change" (fn [file]
+    (if watch (n.watcher.on "change" (fn [file]
       (let [changed (aget n.notions (path.basename file))]
-        (.map [:source :compiled :value] #(aset changed._cache %1 nil)))))
+        (.map [:source :compiled :value] #(aset changed._cache %1 nil))))))
     n))
 
 (defn- load [n]
