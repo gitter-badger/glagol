@@ -1,4 +1,16 @@
-# Etude
+# *Etude* Engine v0.1.0 *"it is time"*
+
+you come to a bottomless pit. dare you [peek inside](./index.js)?
+
+### Known embarrasing issues:
+
+* error messages are much less clear than they could be
+* a notion during runtime is not registered (no listener for file added event)
+* saving a notion created during runtime twice causes crash (because there is
+  still a listener for file changed)
+* you need to be in the correct directory to start a launcher script.
+
+## Description (wall of text warning)
 
 **Etude is a framework for live coding of interactive applications**,
 aiming to become a building block for highly modular, natively scriptable
@@ -63,13 +75,6 @@ software to do by being **_so_ damn in tune with the spirit of Unix philosophy,*
 you should have a look at one of the example projects that I'm also cooking up
 for you. 
 
-All that said, **please stay tuned!** Etude is a work in progress. A 0.1.0
-release is now just about imminent. It would still suffer from the current lack
-of sensible error messaging, and half of the time an exception occurs you would
-be given way too little information, but it would otherwise still do its thing
-ust fine. I'm kind of racing against my patience here since I don't have nearly
-enough manhours on hand and I want to see it doing real world stuff that I would
-know it is not a pipe dream which is why I alternate between that and
-all the finicky infrastructural things such as getting source maps to work.
-Another set of eyeballs would sure help. So brave traveller, if you happen to be
-brave enough to poke around the code here and there, lemme hear about it!
+All that said, **please stay tuned!** Etude is a work in progress. The first
+release is 0.1.0 and is happening right now.
+
