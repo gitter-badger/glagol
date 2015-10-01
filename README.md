@@ -42,7 +42,8 @@ you should have a look at one of the example projects:
 * [etude-tmux](https://github.com/egasimus/etude-tmux) is a minimal attempt at
   producing a working single-purpose library that is built through `etude-engine`
   machinery. Currently it contains a basic implementation of a tmux layout
-  string parser (you know, these things: `227x62,0,0{113x62,0,0,13,113x62,114,0,14}`).
+  string parser (you know, these things: `227x62,0,0{113x62,0,0,13,113x62,114,0,14}` )
+  which has not yet been translated to Wisp from the original JS prototype.
   I need this so I can open new panes at the edges of my tmux session,
   regardless of the current session layout.
 
