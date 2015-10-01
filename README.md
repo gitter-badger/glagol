@@ -25,19 +25,22 @@ you should have a look at one of the example projects:
   [jackmeter](https://github.com/egasimus/jackmeter), before falling victim to
   refactoring.
 
+* etude-demo is currently in the process of absorbing the code from
+  [etude-project](https://github.com/egasimus/etude-project), which is a bit
+  outdated to start with (was written before most of etude-engine took form)
+  and further relies on its contemporary browserify-based bundler in
+  [etude-web](https://github.com/egasimus/etude-web) - which is most likely
+  groken. The HTML5 UI was built up to the point where it was capable of picking
+  samples from a directory, telling the server part to launch a [postmelodic](https://github.com/egasimus/postmelodic)
+  instance for each new sample, and triggering the playback of each via the
+  keyboard, all from the convenience of a web browser.
+
 * [etude-bless](https://github.com/egasimus/etude-bless) is the
   [vdom](https://github.com/Matt-Esch/virtual-dom)-inspired UI framework for
   etude-demo. Lets you render a GUI built out of [Unicode block elements](https://en.wikipedia.org/wiki/Block_Elements),
   by implementing a [declarative interface](https://github.com/egasimus/etude-bless)
   over the strongly imperative widgets of the underlying
   [blessed](https://github.com/egasimus/chjj/blessed).
-
-* [etude-project](https://github.com/egasimus/etude-project) is a bit outdated.
-  It relies on the bundler in [etude-web](https://github.com/egasimus/etude-web)
-  which is most likely groken. It was capable of picking samples from a
-  directory, launching a [postmelodic](https://github.com/egasimus/postmelodic)
-  instance for each, and triggering the playback of each via the keyboard,
-  all from a HTML5 UI you open in your web browser.
 
 * [etude-tmux](https://github.com/egasimus/etude-tmux) is a minimal attempt at
   producing a working single-purpose library that is built through `etude-engine`
