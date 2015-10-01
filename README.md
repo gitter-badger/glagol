@@ -1,8 +1,8 @@
 # Etude Engine
 
-you come to a bottomless pit. dare you [peek inside](./index.js)?
+you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus/etude-engine/blob/master/index.js)?
 
-## v0.2.0
+## v0.2.1
 
 ### Known embarrasing issues:
 
@@ -19,25 +19,32 @@ In order to check out the **_really_ cool things** that Etude can leverage other
 software to do by being **_so_ damn in tune with the spirit of Unix philosophy,**
 you should have a look at one of the example projects:
 
-* [etude-demo](../etude-demo) is where most of the development is brewing,
-  including the current `terminal UI` fad. At an earlier stage it was capable
-  of rendering a basic audio volume meter using [jackmeter](../jackmeter).
+* [etude-demo](https://github.com/egasimus/etude-demo) is where most of the
+  development is brewing, including the current `terminal UI` fad. At an earlier
+  stage it was capable of rendering a basic audio volume meter using
+  [jackmeter](https://github.com/egasimus/jackmeter), before falling victim to
+  refactoring.
 
-* [etude-bless](../etude-bless) is the [vdom](../../Matt-Esch/virtual-dom)-inspired
-  UI framework for etude-demo. Lets you render a GUI built out of
-  [Unicode block elements](https://en.wikipedia.org/wiki/Block_Elements),
-  by implementing a [declarative interface](../etude-bless) over the strongly
-  imperative widgets of the underlying [blessed](../../chjj/blessed) library.
+* [etude-bless](https://github.com/egasimus/etude-bless) is the
+  [vdom](https://github.com/Matt-Esch/virtual-dom)-inspired UI framework for
+  etude-demo. Lets you render a GUI built out of [Unicode block elements](https://en.wikipedia.org/wiki/Block_Elements),
+  by implementing a [declarative interface](https://github.com/egasimus/etude-bless)
+  over the strongly imperative widgets of the underlying
+  [blessed](https://github.com/egasimus/chjj/blessed).
 
-* [etude-project](../etude-project) is a bit outdated. It relies on the bundler
-  `etude-web` which is most likely groken. It was capable of loading samples
-  from a directory, launching a [postmelodic](../postmelodic) instance for each,
-  and playing them, all from a HTML5 UI you open in your web browser.
+* [etude-project](https://github.com/egasimus/etude-project) is a bit outdated.
+  It relies on the bundler in [etude-web](https://github.com/egasimus/etude-web)
+  which is most likely groken. It was capable of picking samples from a
+  directory, launching a [postmelodic](https://github.com/egasimus/postmelodic)
+  instance for each, and triggering the playback of each via the keyboard,
+  all from a HTML5 UI you open in your web browser.
 
-* [etude-tmux](../etude-tmux) is a minimal attempt at producing a working
-  single-purpose library that is built through etude-engine's machinery.
-  Currently it contains a basic implementation of a tmux layout string parser
-  (you know, these things: `227x62,0,0{113x62,0,0,13,113x62,114,0,14}`).
+* [etude-tmux](https://github.com/egasimus/etude-tmux) is a minimal attempt at
+  producing a working single-purpose library that is built through `etude-engine`
+  machinery. Currently it contains a basic implementation of a tmux layout
+  string parser (you know, these things: `227x62,0,0{113x62,0,0,13,113x62,114,0,14}`).
+  I need this so I can open new panes at the edges of my tmux session,
+  regardless of the current session layout.
 
 ## Description (wall of text warning)
 
@@ -51,7 +58,7 @@ around the high-level parts of a digital audio workstation, because those
 things are what I'll be using it for.
 
 **Etude implements a lightweight nanoservice architecture.**
-Etude's fundamental building block is called a [Notion](./spec/notionSpec.js).
+Etude's fundamental building block is called a [Notion](https://github.com/egasimus/etude-engine/blob/master/spec/notionSpec.js).
 Each notion directly corresponds to a file in your application's source code
 tree; having read its source from disk, a Notion goes on to preprocess it,
 evaluates it, and export the resulting value as a public API endpoint,
