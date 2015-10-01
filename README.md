@@ -1,14 +1,43 @@
-# *Etude* Engine v0.1.0 *"it is time"*
+# Etude Engine
 
 you come to a bottomless pit. dare you [peek inside](./index.js)?
+
+## v0.2.0
 
 ### Known embarrasing issues:
 
 * error messages are much less clear than they could be
-* a notion during runtime is not registered (no listener for file added event)
+* a notion created during runtime is not registered (no listener is currently
+  being bound to chokidar's `added` event)
 * saving a notion created during runtime twice causes crash (because there is
-  still a listener for file changed)
+  still a listener for `changed`)
 * you need to be in the correct directory to start a launcher script.
+
+## Examples
+
+In order to check out the **_really_ cool things** that Etude can leverage other
+software to do by being **_so_ damn in tune with the spirit of Unix philosophy,**
+you should have a look at one of the example projects:
+
+* [etude-demo](../etude-demo) is where most of the development is brewing,
+  including the current `terminal UI` fad. At an earlier stage it was capable
+  of rendering a basic audio volume meter using [jackmeter](../jackmeter).
+
+* [etude-bless](../etude-bless) is the [vdom](../../Matt-Esch/virtual-dom)-inspired
+  UI framework for etude-demo. Lets you render a GUI built out of
+  [Unicode block elements](https://en.wikipedia.org/wiki/Block_Elements),
+  by implementing a [declarative interface](../etude-bless) over the strongly
+  imperative widgets of the underlying [blessed](../../chjj/blessed) library.
+
+* [etude-project](../etude-project) is a bit outdated. It relies on the bundler
+  `etude-web` which is most likely groken. It was capable of loading samples
+  from a directory, launching a [postmelodic](../postmelodic) instance for each,
+  and playing them, all from a HTML5 UI you open in your web browser.
+
+* [etude-tmux](../etude-tmux) is a minimal attempt at producing a working
+  single-purpose library that is built through etude-engine's machinery.
+  Currently it contains a basic implementation of a tmux layout string parser
+  (you know, these things: `227x62,0,0{113x62,0,0,13,113x62,114,0,14}`).
 
 ## Description (wall of text warning)
 
@@ -70,11 +99,7 @@ restrictions of any pre-defined GUI, and end up with text-based project files th
 can be version-controlled and human-reviwed, unlike the binary files of most current-
 generation multimedia software.
 
-In order to check out the **_really_ cool things** that Etude can leverage other
-software to do by being **_so_ damn in tune with the spirit of Unix philosophy,**
-you should have a look at one of the example projects that I'm also cooking up
-for you. 
+## Thanks for your attention!
 
-All that said, **please stay tuned!** Etude is a work in progress. The first
-release is 0.1.0 and is happening right now.
-
+As they said in the olden days when people had whole attention _spans_,
+### _please stay tuned!_
