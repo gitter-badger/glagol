@@ -1,8 +1,11 @@
 {
   "name": "etude-engine",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "",
   "main": "index.js",
+  "bin": {
+    "etude": "./bin/etude"
+  },
   "scripts": {
     "test": "node_modules/jasmine/bin/jasmine.js"
   },

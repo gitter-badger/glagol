@@ -2,7 +2,7 @@
 
 you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus/etude-engine/blob/master/index.js)?
 
-## v0.2.2
+## v0.3.0
 
 ### Known embarrasing issues:
 
@@ -12,6 +12,17 @@ you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus
 * saving a notion created during runtime twice causes crash (because there is
   still a listener for `changed`)
 * you need to be in the correct directory to start a launcher script.
+
+## Quick start
+
+```
+npm install -g etude
+mkdir x
+echo '"edit me"' > x/a
+echo '100' > x/b
+echo '(let [r nil] (set! r (fn [] (log ./a ./b) (set-timeout r ./b))) (r))' > x/c
+etude x c
+```
 
 ## Examples
 

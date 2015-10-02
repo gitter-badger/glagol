@@ -1,5 +1,10 @@
 # Changelog
 
+**2015-10-02**  Adam Avramov  <fallenblood@gmail.com>
+
+* **version 0.3.0** *global runner*
+* install `bin/etude` when npm-installed globally (hopefully successfully)
+
 **2015-10-01**  Adam Avramov  <fallenblood@gmail.com>
 
 * **version 0.2.0** *garden trimmer*
