@@ -5,6 +5,9 @@
 * **version 0.3.0** *global runner*
 * install `bin/etude` when npm-installed globally (hopefully successfully)
 
+* **version 0.3.1**
+* another `README` fix
+
 **2015-10-01**  Adam Avramov  <fallenblood@gmail.com>
 
 * **version 0.2.0** *garden trimmer*

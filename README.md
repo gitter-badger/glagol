@@ -2,7 +2,7 @@
 
 you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus/etude-engine/blob/master/index.js)?
 
-## v0.3.0
+## v0.3.1
 
 ### Known embarrasing issues:
 
@@ -16,7 +16,7 @@ you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus
 ## Quick start
 
 ```
-npm install -g etude
+sudo npm install -g etude-engine
 mkdir x
 echo '"edit me"' > x/a
 echo '100' > x/b
