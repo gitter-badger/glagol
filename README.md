@@ -13,10 +13,10 @@ you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus
   still a listener for `changed`)
 * you need to be in the correct directory to start a launcher script.
 
-## Quick start
+## In a nutshell
 
 ```
-sudo npm install -g etude-engine
+sudo npm install -g wisp etude-engine
 mkdir x
 echo '"edit me"' > x/a
 echo '100' > x/b
