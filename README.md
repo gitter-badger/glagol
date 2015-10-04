@@ -11,7 +11,6 @@ you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus
   being bound to chokidar's `added` event)
 * saving a notion created during runtime twice causes crash (because there is
   still a listener for `changed`)
-* you need to be in the correct directory to start a launcher script.
 
 ## In a nutshell
 

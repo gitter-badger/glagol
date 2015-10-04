@@ -5,56 +5,44 @@ var chokidar = require('chokidar')
   , path     = require('path')
   , engine   = require('..');
 
-require('keypress')(process.stdin);
+var arg1 = process.argv[2];
 
-if (process.argv.length <= 2) {
+if (!arg1) {
+  var usage =
+    [ "usage:"
+    , "  etude <dir>"
+    , "  etude <file>"
+    , "  etude <dir> <file>" ];
 
-  console.log("Please specify either an entry file, a root directory, or both.");
-  process.exit();
-
+  console.log(usage.join("\n"));
 } else {
 
-  var entryPointPath = null
-    , rootDir;
+  arg1 = path.resolve(arg1);
 
-  if (process.argv.length === 3) { // <node> <etude> <entry point>
-
-    entryPath = path.resolve(process.argv[2]);
-
-    if (!fs.existsSync(entryPath)) {
-      console.log("\"" + entryPath + "\"", "doesn't seem to exist.");
-      process.exit();
-    }
-
-    var stat = fs.statSync(entryPath);
-    if (stat.isFile()) {
-      rootDir = process.cwd();
-      console.log("Assuming root directory:", rootDir);
-      console.log("Loading entry point:", entryPath);
-
-    } else if (stat.isDirectory()) {
-      console.log("Setting root directory", entryPath);
-      rootDir = entryPath;
-      entryPath = null;
-
-    } else {
-      console.log("\"" + entryPath + "\"",
-        "doesn't seem to be neither a file nor a directory.");
-      process.exit();
-    }
-
-  } else { // <node> <etude> <working dir> <entry point> <...ignored>
-
-    rootDir = path.resolve(process.argv[2]);
-    entryPath = path.resolve(rootDir, process.argv[3]);
-    if (process.argv.length > 4) {
-      console.log("The following arguments have been ignored:",
-        process.argv.slice(4));
-    }
-
+  if (!fs.existsSync(arg1)) {
+    console.log("\"" + entryPath + "\"", "doesn't seem to exist.");
+    process.exit();
   }
 
-  var root = engine.tree.makeNotionDirectory(rootDir);
-  engine.tree.descend(root, path.relative(rootDir, entryPath)).value;
+  var stat = fs.statSync(arg1)
+    , rootDir
+    , entryPoint;
 
+  if (stat.isFile()) {
+    rootDir    = path.dirname(arg1);
+    entryPoint = path.basename(arg1);
+
+  } else if (stat.isDirectory()) {
+    rootDir    = arg1;
+    entryPoint = 'main';
+
+  } else {
+    console.log("\"" + entryPath + "\"",
+      "doesn't seem to be a file nor a directory!?");
+  }
+
+  console.log("launching", entryPoint, "from", rootDir);
+
+  var root = engine.tree.makeNotionDirectory(rootDir);
+  engine.tree.descend(root, entryPoint).value;
 }
