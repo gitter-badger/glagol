@@ -200,7 +200,8 @@ function makeContext (filename, elevated) {
                      , stdin:  process.stdin
                      , stdout: process.stdout
                      , stderr: process.stderr
-                     , exit:   process.exit }
+                     , exit:   process.exit
+                     , argv:   process.argv }
     , setTimeout:    setTimeout
     , clearTimeout:  clearTimeout
     , setInterval:   setInterval
