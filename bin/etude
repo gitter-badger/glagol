@@ -24,25 +24,8 @@ if (!arg1) {
     process.exit();
   }
 
-  var stat = fs.statSync(arg1)
-    , rootDir
-    , entryPoint;
+  process.argv = process.argv.slice(3);
 
-  if (stat.isFile()) {
-    rootDir    = path.dirname(arg1);
-    entryPoint = path.basename(arg1);
-
-  } else if (stat.isDirectory()) {
-    rootDir    = arg1;
-    entryPoint = 'main';
-
-  } else {
-    console.log("\"" + entryPath + "\"",
-      "doesn't seem to be a file nor a directory!?");
-  }
-
-  console.log("launching", entryPoint, "from", rootDir);
-
-  var root = engine.tree.makeNotionDirectory(rootDir);
-  engine.tree.descend(root, entryPoint).value;
+  var root = engine.tree.makeNotionDirectory(path.dirname(arg1));
+  engine.tree.descend(root, path.basename(arg1)).value;
 }
