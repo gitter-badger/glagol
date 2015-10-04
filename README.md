@@ -2,7 +2,7 @@
 
 you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus/etude-engine/blob/master/index.js)?
 
-## v0.3.1
+## v0.4.0
 
 ### Known embarrasing issues:
 

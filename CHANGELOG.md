@@ -1,5 +1,12 @@
 # Changelog
 
+**2015-10-04**  Adam Avramov  <fallenblood@gmail.com>
+
+* **version 0.4.0** *nicer launcher*
+* add installing `wisp` to nutshell
+* `process.argv` is now available in runtime context
+* rewrite `bin/etude` launch script and make it cwd-independent
+
 **2015-10-02**  Adam Avramov  <fallenblood@gmail.com>
 
 * **version 0.3.0** *global runner*
