@@ -1,15 +1,26 @@
 var runtime = require('..').runtime
   , tree    = require('..').tree
-  , path    = require('path');
+  , path    = require('path')
+  , fs      = require('fs');
 
-var root = './spec/sample';
+var ROOT         = './spec/sample'
+  , NEW_FILE     = path.join(ROOT, 'new-notion')
+  , NEW_DIR      = path.join(ROOT, 'new-directory')
+  , NEW_DIR_FILE = path.join(NEW_DIR, 'new-notion-2');
 
 describe('a notion directory', function () {
 
-  var d;
+  var d
 
   beforeEach(function () {
-    d = tree.makeNotionDirectory(root);
+    // if they already exist at load time (e.g. previous run didn't clean up),
+    // delete the files and directories that will be created later
+    if (fs.existsSync(NEW_FILE))     fs.unlinkSync(NEW_FILE);
+    if (fs.existsSync(NEW_DIR_FILE)) fs.unlinkSync(NEW_DIR_FILE);
+    if (fs.existsSync(NEW_DIR))      fs.rmdirSync(NEW_DIR);
+
+    // create a fresh notion dir instance in the root path
+    d = tree.makeNotionDirectory(ROOT);
   })
 
   it('is an object returned by tree.make-notion-directory', function () {
@@ -18,8 +29,8 @@ describe('a notion directory', function () {
 
   it('knows its type, name, and path', function () {
     expect(d.type).toBe('NotionDirectory');
-    expect(d.name).toBe(path.basename(root));
-    expect(d.path).toBe(path.resolve(root));
+    expect(d.name).toBe(path.basename(ROOT));
+    expect(d.path).toBe(path.resolve(ROOT));
   })
 
   function compareNotionTree (notions, contents) {
@@ -51,6 +62,50 @@ describe('a notion directory', function () {
     expect(Object.keys(d.notions).every(hasParent)).toBe(true);
     function hasParent (n) { return d.notions[n].parent === d };
   })
+
+  it('creates notion out of new file added', function (done) {
+
+    // create a new file, then wait for the watcher to pick it up
+
+    fs.writeFileSync(NEW_FILE, '42');
+
+    var n = path.basename(NEW_FILE)
+      , t = setInterval(check, 250);
+
+    function check () {
+      if (-1 < Object.keys(d.notions).indexOf(n)) {
+        clearInterval(t);
+        expect(d.notions[n].value).toBe(42);
+        fs.unlinkSync(NEW_FILE);
+        done();
+      }
+    }
+
+  }, 10000);
+
+  it('creates notion directory out of new dir added', function (done) {
+
+    // create a new directory, containing another file,
+    // then wait for the watcher to pick them up
+
+    fs.mkdirSync(NEW_DIR);
+    fs.writeFileSync(NEW_DIR_FILE, '42');
+
+    var nd = path.basename(NEW_DIR)
+      , nf = path.basename(NEW_DIR_FILE)
+      , t  = setInterval(check, 250);
+
+    function check () {
+      console.log("BAR", d);
+      if (-1 < Object.keys(d.notions).indexOf(nd)) {
+        console.log(d.notions[nd]);
+        clearInterval(t);
+        fs.unlinkSync(NEW_FILE);
+        done();
+      }
+    }
+
+  }, 10000);
 
 })
 

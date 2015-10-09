@@ -60,7 +60,7 @@ describe('a notion', function () {
     function () {
       var n = notion.makeNotion('', '42');
       n.source = '23';
-      expect(n.compiled.output.code).toBe( // TODO
+      expect(n.compiled.output.code).toBe(
         '23;\n//# sourceMappingURL=data:application/json;base64,' +
         'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
         'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiMjMiXX0=\n');

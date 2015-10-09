@@ -207,6 +207,7 @@ function makeContext (filename, elevated) {
     , setInterval:   setInterval
     , clearInterval: clearInterval
     , isInstanceOf:  function (type, obj) { return obj instanceof type }
+    , isSame:        function (a, b) { return a === b }
     , require:       _require };
 
   if (elevated) {

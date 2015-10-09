@@ -10,19 +10,29 @@
 
 (defn make-notion-directory
   [dir & opts]
-  (let [dir   (path.resolve dir)
-        watch (= -1 (opts.index-of :nowatch))
-        hindu (if watch (chokidar.watch dir { :depth 0 :persistent false}))
-        n     { :type    "NotionDirectory"
-                :name    (path.basename dir)
-                :path    dir
-                :notions {}
-                :watcher hindu }]
+  (let [dir (path.resolve dir)
+        n   { :type    "NotionDirectory"
+              :name    (path.basename dir)
+              :path    dir
+              :notions {} }]
     (set! n.notions (load n))
-    (if watch (n.watcher.on "change" (fn [file]
-      (let [changed (aget n.notions (path.basename file))]
-        (.map [:source :compiled :value] #(aset changed._cache %1 nil))))))
+    (if (= -1 (opts.index-of :nowatch)) (init-watcher! n))
     n))
+
+(defn- init-watcher! [n]
+  (set! n.watcher (chokidar.watch n.path { :depth 0 :persistent false }))
+  (n.watcher.on :change
+    (fn [file]
+      (let [changed (aget n.notions (path.basename file))]
+        (.map [:source :compiled :value] #(aset changed._cache %1 nil)))))
+  (n.watcher.on :add
+    (fn [file]
+      (if (= -1 (.index-of (keys n.notions) (path.basename file))) (do
+        (aset n.notions (path.basename file) (notion.make-notion file)))))))
+  ;(n.watcher.on :addDir
+    ;(fn [dir]
+      ;(if (= -1 (.index-of (keys n.notions) (path.basename dir))) (do
+        ;(load (make-notion-directory dir)))))))
 
 (defn- load [n]
   (let [notions {}]
