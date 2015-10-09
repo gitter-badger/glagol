@@ -84,7 +84,7 @@ describe('a notion directory', function () {
 
   }, 10000);
 
-  it('creates notion directory out of new dir added', function (done) {
+  xit('creates notion directory out of new dir added', function (done) {
 
     // create a new directory, containing another file,
     // then wait for the watcher to pick them up

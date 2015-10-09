@@ -151,3 +151,6 @@
             (add-to-tree cwd i n))))
         (if notion.parent (set! cwd.__ (get-tree notion.parent)))))
     cwd))
+
+(defn invalidate-cache [n]
+  (.map [:source :compiled :value] #(aset n._cache %1 nil)))

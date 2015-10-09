@@ -41,15 +41,14 @@
 (defn- init-watcher! [n]
   (set! n.watcher (chokidar.watch n.path { :depth 0 :persistent false }))
   (n.watcher.on :change
-    (fn [file]
-      (let [changed (aget n.notions (path.basename file))]
-        (.map [:source :compiled :value] #(aset changed._cache %1 nil)))))
+    #(notion.invalidate-cache (aget n.notions (path.basename %1))))
   (n.watcher.on :add
-    (fn [file]
-      (if (= -1 (.index-of (keys n.notions) (path.basename file)))
-        (aset n.notions (path.basename file) (notion.make-notion file)))))
-  (n.watcher.on :addDir
-    (fn [dir] (if (= -1 (.index-of (keys n.notions) (path.basename dir))) nil))))
+    #(if (= -1 (.index-of (keys n.notions) (path.basename %1)))
+      (aset n.notions (path.basename %1) (notion.make-notion %1)))))
+  ;(n.watcher.on :addDir
+    ;#(if (= -1 (.index-of (keys n.notions) (path.basename %1)))
+      ;(log.as (str n.name "::add-dir") (.join (keys n.notions) ",") %1))))
+    ;(fn [dir] (if (= -1 (.index-of (keys n.notions) (path.basename dir))) nil))))
       ;(log.as :adddir n.name dir)))))
       ;(if (= -1 (.index-of (keys n.notions) (path.basename dir))) (do
         ;(load (make-notion-directory dir)))))))
