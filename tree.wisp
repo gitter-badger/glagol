@@ -6,18 +6,37 @@
 (def ^:private path     (require "path"))
 (def ^:private Q        (require "q"))
 
-;;; directory constructor, loader, and serializer
-
 (defn make-notion-directory
+  " NotionDirectory constructor. "
   [dir & opts]
-  (let [dir (path.resolve dir)
-        n   { :type    "NotionDirectory"
-              :name    (path.basename dir)
-              :path    dir
-              :notions {} }]
-    (set! n.notions (load n))
+  (let [dir
+          (path.resolve dir)
+        n
+          { :type    "NotionDirectory"
+            :name    (path.basename dir)
+            :path    dir
+            :notions {} }
+        load
+          #(.map (ignore-files (glob.sync %1 %2)) %3)]
+
+    (if (fs.exists-sync n.path) (do
+      ; load child notions
+      (load (path.join n.path "*") { :nodir true }
+        (fn [f] (let [f (notion.make-notion f)]
+          (set! f.parent n) (aset n.notions f.name f))))
+      ; load child notion directories
+      (load (path.join n.path "*" path.sep) {}
+        (fn [d] (let [d (make-notion-directory d)]
+          (set! d.parent n) (aset n.notions d.name d))))))
+
+    ; start watcher
     (if (= -1 (opts.index-of :nowatch)) (init-watcher! n))
+
     n))
+
+(defn- ignore-files
+  [files]
+  (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
 
 (defn- init-watcher! [n]
   (set! n.watcher (chokidar.watch n.path { :depth 0 :persistent false }))
@@ -34,21 +53,6 @@
       ;(log.as :adddir n.name dir)))))
       ;(if (= -1 (.index-of (keys n.notions) (path.basename dir))) (do
         ;(load (make-notion-directory dir)))))))
-
-(defn- load [n]
-  (let [notions {}]
-    (if (fs.exists-sync n.path) (do
-      (.map (ignore-files (glob.sync (path.join n.path "*") { :nodir true }))
-        (fn [f] (let [f (notion.make-notion f)]
-          (set! f.parent n) (aset notions f.name f))))
-      (.map (ignore-files (glob.sync (path.join n.path "*" path.sep))) (fn [d]
-        (let [d (make-notion-directory d)]
-          (set! d.parent n) (aset notions d.name d))))))
-    notions))
-
-(defn- ignore-files
-  [files]
-  (files.filter (fn [filename] (= -1 (filename.index-of "node_modules")))))
 
 
 ;;; directory navigation

@@ -20,7 +20,7 @@ mkdir x
 echo '"edit me"' > x/a
 echo '100' > x/b
 echo '(let [r nil] (set! r (fn [] (log ./a ./b) (set-timeout r ./b))) (r))' > x/c
-etude x c
+etude x/c
 ```
 
 ## Examples
