@@ -6,11 +6,11 @@ you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus
 
 ### Known embarrasing issues:
 
-* error messages are much less clear than they could be
-* a notion created during runtime is not registered (no listener is currently
-  being bound to chokidar's `added` event)
-* saving a notion created during runtime twice causes crash (because there is
-  still a listener for `changed`)
+* error messages are much less clear than they could be; server-side source maps
+  are yet to be implemented, and compile errors after runtime updates aren't
+  thrown -- instead the failed notion gets set to `undefined` which causes an
+  exception further down the road.
+* new notion directories still can't be created during runtime (files ok though)
 
 ## In a nutshell
 

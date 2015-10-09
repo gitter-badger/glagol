@@ -1,3 +1,17 @@
+(defn freeze [n]
+  (merge { :name n.name :time (timestamp)}
+    (cond
+      (= n.type "Notion")
+        { :type "FrozenNotion"
+          :code n.compiled.output.code }
+      (= n.type "NotionDirectory")
+        { :type "FrozenNotionDirectory"
+          :notions (n.notions.map freeze) }
+      :else
+        (throw (Error. (str "tried to freeze unknown thing"))))))
+
+(defn- timestamp [] (String (Date.now)))
+
 ; TODO ; TODO ; TODO ; TODO ; TODO ; TODO ; TODO ; 
 ;
 (defn freeze-notion

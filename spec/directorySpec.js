@@ -14,7 +14,8 @@ describe('a notion directory', function () {
 
   beforeEach(function () {
     // if they already exist at load time (e.g. previous run didn't clean up),
-    // delete the files and directories that will be created later
+    // delete those files and directories that will be created at runtime and
+    // be used to check whether creating new notions at runtime works
     if (fs.existsSync(NEW_FILE))     fs.unlinkSync(NEW_FILE);
     if (fs.existsSync(NEW_DIR_FILE)) fs.unlinkSync(NEW_DIR_FILE);
     if (fs.existsSync(NEW_DIR))      fs.rmdirSync(NEW_DIR);
@@ -96,11 +97,12 @@ describe('a notion directory', function () {
       , t  = setInterval(check, 250);
 
     function check () {
-      console.log("BAR", d);
+      console.log("BAR", Object.keys(d.notions));
       if (-1 < Object.keys(d.notions).indexOf(nd)) {
         console.log(d.notions[nd]);
         clearInterval(t);
-        fs.unlinkSync(NEW_FILE);
+        fs.unlinkSync(NEW_DIR_FILE);
+        fs.rmdirSync(NEW_DIR);
         done();
       }
     }
