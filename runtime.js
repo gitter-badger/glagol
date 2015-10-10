@@ -180,14 +180,22 @@ function importIntoContext (context, obj) {
 function makeContext (filename, elevated) {
 
   function _require (module) {
-    module = resolve.sync(module,
-      { extensions: [".js", ".wisp"]
-      , basedir:    path.dirname(filename) });
+
+    try {
+      module = resolve.sync(module,
+        { extensions: [".js", ".wisp"]
+        , basedir:    path.dirname(filename) });
+    } catch (e) {
+      // passthru for electron's extra standard libraries
+      return require(module)
+    };
+
     if (!process.browser && path.extname(module) === '.wisp') {
       return requireWisp(module)
     } else {
       return require(module)
     }
+
   };
   _require.main = require.main;
 
