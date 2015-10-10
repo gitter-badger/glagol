@@ -1,12 +1,15 @@
 (defn freeze [n]
-  (merge { :name n.name :time (timestamp)}
+  (merge
+    { :name n.name
+      :time (timestamp) }
     (cond
       (= n.type "Notion")
         { :type "FrozenNotion"
           :code n.compiled.output.code }
       (= n.type "NotionDirectory")
         { :type "FrozenNotionDirectory"
-          :notions (n.notions.map freeze) }
+          :notions (.reduce (keys n.notions)
+            #(assoc %1 %2 (freeze (aget n.notions %2))) {}) }
       :else
         (throw (Error. (str "tried to freeze unknown thing"))))))
 
