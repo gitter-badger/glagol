@@ -145,15 +145,16 @@ function compileSource (source, filename, raw) {
 
   var processed = wisp.compiler.analyzeForms(forms)
   if (processed.error) {
-    console.log("->", processed.error.line, processed.error.column)
-    throw new Error("Compile error in " + filename + ": " + processed.error);
+    var msg = "Wisp analyzer error in " + filename + ":\n  " + processed.error;
+    console.log(msg, "\n  ->", processed.error.line, processed.error.column)
+    throw new Error(msg);
   }
 
   var options = { 'source-uri': filename || "<???>" , 'source': source }
     , output  = wisp.compiler.generate.bind(null, options)
                   .apply(null, processed.ast);
   if (output.error) {
-    throw new Error("Compile error in " + filename + ": " + processed.error)
+    throw new Error("Wisp compiler error in " + filename + ": " + processed.error)
   }
 
   return { forms: forms, processed: processed, output: output }
