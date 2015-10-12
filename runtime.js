@@ -179,25 +179,7 @@ function importIntoContext (context, obj) {
 
 function makeContext (filename, elevated) {
 
-  function _require (module) {
-
-    try {
-      module = resolve.sync(module,
-        { extensions: [".js", ".wisp"]
-        , basedir:    path.dirname(filename) });
-    } catch (e) {
-      // passthru for electron's extra standard libraries
-      return require(module)
-    };
-
-    if (!process.browser && path.extname(module) === '.wisp') {
-      return requireWisp(module)
-    } else {
-      return require(module)
-    }
-
-  };
-  _require.main = require.main;
+  var browser = Boolean(process.browser || process.versions.electron);
 
   var context =
     { exports:       {}
@@ -219,23 +201,37 @@ function makeContext (filename, elevated) {
     , isSame:        function (a, b) { return a === b }
     , require:       _require };
 
+  [ wisp.ast
+  , wisp.sequence
+  , wisp.string
+  , wisp.runtime ].map(importIntoContext.bind(null, context));
+
   if (elevated) {
     context.process = process;
     context.require = require;
   }
 
-  if (process.browser) {
-    ATOM_NAMES.map(function (atomName) {
-      if (context[atomName]) console.log(
-        "Warning: overriding existing key", atomName, "in context", name);
-      context[atomName] = global[atomName];
-    })
+  if (browser) {
+    console.log(global);
+    context.document = document;
   }
 
-  [ wisp.ast
-  , wisp.sequence
-  , wisp.string
-  , wisp.runtime ].map(importIntoContext.bind(null, context));
+  function _require (module) {
+    try {
+      module = resolve.sync(module,
+        { extensions: [".js", ".wisp"]
+        , basedir:    path.dirname(filename) });
+    } catch (e) {
+      // passthru for electron's extra standard libraries
+      return require(module)
+    };
+    if (!browser && path.extname(module) === '.wisp') {
+      return requireWisp(module)
+    } else {
+      return require(module)
+    }
+  };
+  _require.main = require.main;
 
   return vm.createContext(context);
 }

@@ -22,13 +22,14 @@ function start () {
   var arg1 = process.argv[2];
 
   if (!arg1) {
+
     var usage =
       [ "usage:"
       , "  etude <dir>"
       , "  etude <file>"
       , "  etude <dir> <file>" ];
-
     console.log(usage.join("\n"));
+
   } else {
 
     arg1 = path.resolve(arg1);
