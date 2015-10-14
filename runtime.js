@@ -179,7 +179,9 @@ function importIntoContext (context, obj) {
 
 function makeContext (filename, elevated) {
 
-  var browser = Boolean(process.browser || process.versions.electron);
+  var isBrowserify = process.browser
+    , isElectron   = Boolean(process.versions.electron)
+    , isBrowser    = isBrowserify || isElectron;
 
   var context =
     { exports:       {}
@@ -211,8 +213,7 @@ function makeContext (filename, elevated) {
     context.require = require;
   }
 
-  if (browser) {
-    console.log(global);
+  if (isBrowser) {
     context.document = document;
   }
 
@@ -225,7 +226,7 @@ function makeContext (filename, elevated) {
       // passthru for electron's extra standard libraries
       return require(module)
     };
-    if (!browser && path.extname(module) === '.wisp') {
+    if (!isBrowserify && path.extname(module) === '.wisp') {
       return requireWisp(module)
     } else {
       return require(module)
