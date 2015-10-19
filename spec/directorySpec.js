@@ -8,7 +8,7 @@ var ROOT         = './spec/sample'
   , NEW_DIR      = path.join(ROOT, 'new-directory')
   , NEW_DIR_FILE = path.join(NEW_DIR, 'new-notion-2');
 
-xdescribe('a notion directory', function () {
+describe('a notion directory', function () {
 
   var d;
 
@@ -22,8 +22,6 @@ xdescribe('a notion directory', function () {
 
     // create a fresh notion dir instance in the root path
     d = core.Directory(ROOT);
-    console.log(core.Directory)
-    console.log(d);
   })
 
   it('is an object returned by tree.make-notion-directory', function () {
@@ -31,26 +29,26 @@ xdescribe('a notion directory', function () {
   })
 
   it('knows its type, name, and path', function () {
-    expect(d.type).toBe('NotionDirectory');
+    expect(d.type).toBe('Directory');
     expect(d.name).toBe(path.basename(ROOT));
     expect(d.path).toBe(path.resolve(ROOT));
   })
 
-  function compareNotionTree (notions, contents) {
-    expect(Object.keys(notions).length).toBe(Object.keys(contents).length);
+  function compareScriptTree (nodes, contents) {
+    expect(Object.keys(nodes).length).toBe(Object.keys(contents).length);
     Object.keys(contents).map(function (x) {
-      expect(notions[x]).toBeDefined();
-      if (notions[x]) {
+      expect(nodes[x]).toBeDefined();
+      if (nodes[x]) {
         if (x[0] === 'd') {
-          expect(notions[x].type).toBe('NotionDirectory');
-          compareNotionTree(notions[x].notions, contents[x]);
-        } else if (x[0] === 'n') expect(notions[x].type).toBe('Notion');
+          expect(nodes[x].type).toBe('Directory');
+          compareScriptTree(nodes[x].nodes, contents[x]);
+        } else if (x[0] === 'n') expect(nodes[x].type).toBe('Script');
       }
     });
   }
 
   it('recursively loads its contents', function () {
-    compareNotionTree(d.notions,
+    compareScriptTree(d.nodes,
       { d1: { d11: { n111: null }
             , d12: { n121: null, n122: null }
             , n11: null }
@@ -61,8 +59,8 @@ xdescribe('a notion directory', function () {
   })
 
   it('sets a reference to itself in each contained object', function () {
-    expect(Object.keys(d.notions).every(hasParent)).toBe(true);
-    function hasParent (n) { return d.notions[n].parent === d };
+    expect(Object.keys(d.nodes).every(hasParent)).toBe(true);
+    function hasParent (n) { return d.nodes[n].parent === d };
   })
 
   it('creates notion out of new file added', function (done) {
@@ -99,8 +97,8 @@ xdescribe('a notion directory', function () {
 
     function check () {
       console.log("BAR", Object.keys(d.nodes));
-      if (-1 < Object.keys(d.notions).indexOf(nd)) {
-        console.log(d.notions[nd]);
+      if (-1 < Object.keys(d.nodes).indexOf(nd)) {
+        console.log(d.nodes[nd]);
         clearInterval(t);
         fs.unlinkSync(NEW_DIR_FILE);
         fs.rmdirSync(NEW_DIR);
