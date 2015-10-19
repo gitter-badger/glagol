@@ -6,19 +6,6 @@
 
 ;;; directory navigation
 
-(defn descend [tree path]
-  (loop [current-node   tree
-         path-fragments (path.split "/")]
-    ; error checking; TODO throw when trying to descend down a file
-    (if (> path-fragments.length 0)
-      (do
-        (if (= -1 (.index-of (keys current-node.notions) (aget path-fragments 0)))
-          (throw (Error. (str "No notion at path " path))))
-        (recur
-          (aget current-node.notions (aget path-fragments 0))
-          (path-fragments.slice 1)))
-      current-node)))
-
 (defn get-root [notion]
   (loop [n notion]
     (if n.parent (recur n.parent)

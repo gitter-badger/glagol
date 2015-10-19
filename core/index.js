@@ -41,7 +41,7 @@ function start () {
 
     var tree = module.exports.tree
       , root = module.exports.Directory(path.dirname(arg1))
-      , main = tree.descend(root, path.basename(arg1))
+      , main = root.descend(path.basename(arg1))
       , val  = main.value;
 
     return (typeof val === "function") ? val(root) : val;

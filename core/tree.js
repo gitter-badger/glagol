@@ -65,13 +65,13 @@ function translate (name) {
         //nil)))
 
 function ERR_NO_PARENT (node) {
-  throw new Error("node " + node.name + " is not connected to a tree");
+  throw Error("node " + node.name + " is not connected to a tree");
 }
 
 function ERR_UNKNOWN_TYPE (node) {
-  throw new Error("foreign body in script tree, possible name: " + node.name);
+  throw Error("foreign body in script tree, possible name: " + node.name);
 }
 
 function ERR_CANT_SET () {
-  throw new Error("setting values of tree nodes is not implemented yet")
+  throw Error("setting values of tree nodes is not implemented yet")
 }
