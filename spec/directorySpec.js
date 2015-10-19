@@ -4,27 +4,27 @@ var path = require('path')
 var core    = require('..');
 
 var ROOT         = './spec/sample'
-  , NEW_FILE     = path.join(ROOT, 'new-notion')
+  , NEW_FILE     = path.join(ROOT, 'new-script')
   , NEW_DIR      = path.join(ROOT, 'new-directory')
-  , NEW_DIR_FILE = path.join(NEW_DIR, 'new-notion-2');
+  , NEW_DIR_FILE = path.join(NEW_DIR, 'new-script-2');
 
-describe('a notion directory', function () {
+describe('a script directory', function () {
 
   var d;
 
   beforeEach(function () {
     // if they already exist at load time (e.g. previous run didn't clean up),
     // delete those files and directories that will be created at runtime and
-    // be used to check whether creating new notions at runtime works
+    // be used to check whether creating new scripts at runtime works
     if (fs.existsSync(NEW_FILE))     fs.unlinkSync(NEW_FILE);
     if (fs.existsSync(NEW_DIR_FILE)) fs.unlinkSync(NEW_DIR_FILE);
     if (fs.existsSync(NEW_DIR))      fs.rmdirSync(NEW_DIR);
 
-    // create a fresh notion dir instance in the root path
+    // create a fresh script dir instance in the root path
     d = core.Directory(ROOT);
   })
 
-  it('is an object returned by tree.make-notion-directory', function () {
+  it('is an object instantiated by core.Directory', function () {
     expect(typeof d).toBe('object');
   })
 
@@ -63,7 +63,7 @@ describe('a notion directory', function () {
     function hasParent (n) { return d.nodes[n].parent === d };
   })
 
-  it('creates notion out of new file added', function (done) {
+  it('creates a Script object for a newly created file', function (done) {
 
     // create a new file, then wait for the watcher to pick it up
 
@@ -83,7 +83,7 @@ describe('a notion directory', function () {
 
   }, 10000);
 
-  xit('creates notion directory out of new dir added', function (done) {
+  xit('creates a Directory object for a newly created directory', function (done) {
 
     // create a new directory, containing another file,
     // then wait for the watcher to pick them up

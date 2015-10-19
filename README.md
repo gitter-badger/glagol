@@ -1,31 +1,32 @@
-# Etude Engine
+# Glagol 1.0.0
 
-you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus/etude-engine/blob/master/index.js)?
+Glagol is a Node.js framework. It enables you to build programs that can be
+edited on the fly. It also lets you use preprocessors such as Wisp or
+CoffeeScript directly, without complicated build systems.
 
-## v0.4.0
-
-### Known embarrasing issues:
-
-* error messages are much less clear than they could be; server-side source maps
-  are yet to be implemented, and compile errors after runtime updates aren't
-  thrown -- instead the failed script's value gets set to `undefined`, which
-  causes an exception further down the road.
-* new directories still can't be created during runtime (files ok though)
 
 ## In a nutshell
 
 ```
-sudo npm install -g wisp etude-engine
+sudo npm install -g wisp glagol
 mkdir x
 echo '"edit me"' > x/a
-echo '100' > x/b
-echo '(let [r nil] (set! r (fn [] (log ./a ./b) (set-timeout r ./b))) (r))' > x/c
-etude x/c
+echo '1000' > x/b
+echo '(function r () { log(_["a"], _["b"]); setTimeout(r, _["b"]) })()' > x/c
+glagol x/c
 ```
 
-## See also
+Now go ahead and edit the files `a` and `b`, and watch as the output of `c`
+changes.
 
-* [The design of Etude](https://github.com/egasimus/etude-engine/blob/master/doc/design.md)
+
+## Documentation
+
+* [Changelog](https://github.com/egasimus/etude-engine/blob/master/CHANGELOG.md)
+* [Roadmap](https://github.com/egasimus/etude-engine/blob/master/doc/roadmap.md)
+* [Design notes](https://github.com/egasimus/etude-engine/blob/master/doc/design.md)
 * [Example applications in various stages of incompleteness](https://github.com/egasimus/etude-engine/blob/master/doc/examples.md)
 
 
+## License
+* Released under [GNU GPL3](https://github.com/egasimus/etude-engine/blob/master/LICENSE)

@@ -45,19 +45,19 @@ describe('a value tree', function () {
   function s (x) { return JSON.stringify(Object.keys(x)) }
 
   var view_from_n121_ =
-    { _:  { n121: "Notion"
-          , n122: "Notion" }
-    , __: { d11: { n111: "Notion" }
-          , d12: "Dir"
-          , _:   "Dir"
-          , __:  { d1: { d11: "Dir"
-                       , d12: "Dir"
-                       , n11: "Notion" }
-                 , d2: { n21: "Notion" }
+    { _:  { n121: "Script"
+          , n122: "Script" }
+    , __: { d11: { n111: "Script" }
+          , d12: "Directory"
+          , _:   "Directory"
+          , __:  { d1: { d11: "Directory"
+                       , d12: "Directory"
+                       , n11: "Script" }
+                 , d2: { n21: "Script" }
                  , d3: { }
-                 , n1: "Notion"
-                 , n2: "Notion"
-                 , _:  "Dir"
+                 , n1: "Script"
+                 , n2: "Script"
+                 , _:  "Directory"
                  , __: null } } };
 
 })
