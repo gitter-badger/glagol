@@ -8,9 +8,9 @@ you come to a bottomless pit. dare you [peek inside](https://github.com/egasimus
 
 * error messages are much less clear than they could be; server-side source maps
   are yet to be implemented, and compile errors after runtime updates aren't
-  thrown -- instead the failed notion gets set to `undefined` which causes an
-  exception further down the road.
-* new notion directories still can't be created during runtime (files ok though)
+  thrown -- instead the failed script's value gets set to `undefined`, which
+  causes an exception further down the road.
+* new directories still can't be created during runtime (files ok though)
 
 ## In a nutshell
 

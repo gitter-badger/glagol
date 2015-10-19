@@ -1,11 +1,10 @@
-var runtime = require('../runtimes/wisp.js')
-  , fs      = require('fs')
+var fs      = require('fs')
   , path    = require('path');
 
 module.exports =
-  { runtime:   runtime
-  , Script:    require('./script.js')
+  { Script:    require('./script.js')
   , Directory: require('./directory.js')
+  , runtime:   require('../runtimes/wisp.js')
   , export:    export_
   , start:     start };
 

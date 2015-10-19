@@ -1,3 +1,11 @@
+var path = require('path')
+  , fs   = require('fs');
+
+var glob     = require('glob')
+  , chokidar = require('chokidar');
+
+var Script = require('../core/script.js');
+
 var Directory = module.exports = function Directory (dirPath, options) {
 
   // TODO: uniform interface for Script and Directory!
@@ -5,6 +13,8 @@ var Directory = module.exports = function Directory (dirPath, options) {
 
   // enforce usage of `new` keyword even if omitted
   if (!(this instanceof Directory)) return new Directory(dirPath, options);
+
+  options = options || {};
 
   this.type  = "Directory";
   this.path  = path.resolve(dirPath);
@@ -16,7 +26,7 @@ var Directory = module.exports = function Directory (dirPath, options) {
     this._load(path.join("*", path.sep), {}, Directory);
   }
 
-  if (!opts.nowatch) this._watch();
+  if (!options.nowatch) this._watch();
 
 }
 

@@ -1,16 +1,16 @@
-var runtime = require('..').runtime
-  , tree    = require('..').tree
-  , path    = require('path')
-  , fs      = require('fs');
+var path = require('path')
+  , fs   = require('fs');
+
+var core    = require('..');
 
 var ROOT         = './spec/sample'
   , NEW_FILE     = path.join(ROOT, 'new-notion')
   , NEW_DIR      = path.join(ROOT, 'new-directory')
   , NEW_DIR_FILE = path.join(NEW_DIR, 'new-notion-2');
 
-describe('a notion directory', function () {
+xdescribe('a notion directory', function () {
 
-  var d
+  var d;
 
   beforeEach(function () {
     // if they already exist at load time (e.g. previous run didn't clean up),
@@ -21,7 +21,9 @@ describe('a notion directory', function () {
     if (fs.existsSync(NEW_DIR))      fs.rmdirSync(NEW_DIR);
 
     // create a fresh notion dir instance in the root path
-    d = tree.makeNotionDirectory(ROOT);
+    d = core.Directory(ROOT);
+    console.log(core.Directory)
+    console.log(d);
   })
 
   it('is an object returned by tree.make-notion-directory', function () {
@@ -58,7 +60,6 @@ describe('a notion directory', function () {
       , n2: null });
   })
 
-
   it('sets a reference to itself in each contained object', function () {
     expect(Object.keys(d.notions).every(hasParent)).toBe(true);
     function hasParent (n) { return d.notions[n].parent === d };
@@ -74,9 +75,9 @@ describe('a notion directory', function () {
       , t = setInterval(check, 250);
 
     function check () {
-      if (-1 < Object.keys(d.notions).indexOf(n)) {
+      if (-1 < Object.keys(d.nodes).indexOf(n)) {
         clearInterval(t);
-        expect(d.notions[n].value).toBe(42);
+        expect(d.nodes[n].value).toBe(42);
         fs.unlinkSync(NEW_FILE);
         done();
       }
@@ -97,7 +98,7 @@ describe('a notion directory', function () {
       , t  = setInterval(check, 250);
 
     function check () {
-      console.log("BAR", Object.keys(d.notions));
+      console.log("BAR", Object.keys(d.nodes));
       if (-1 < Object.keys(d.notions).indexOf(nd)) {
         console.log(d.notions[nd]);
         clearInterval(t);

@@ -1,3 +1,7 @@
+var path = require('path')
+  , fs   = require('fs')
+  , vm   = require('vm');
+
 var Script = module.exports = function Script (srcPath, srcData) {
 
   // enforce usage of `new` keyword even if omitted
@@ -13,6 +17,9 @@ var Script = module.exports = function Script (srcPath, srcData) {
     , compiled: undefined
     , value:    undefined };
 
+  // TODO autodetect this
+  this.runtime = require('../runtimes/wisp.js');
+
   // define "smart" properties
   // these comprise the core of the live updating functionality:
   // the script's source is loaded, processed, and updated on demand
@@ -26,16 +33,16 @@ var Script = module.exports = function Script (srcPath, srcData) {
 
 }
 
+var operations = { source: "load", compiled: "compile", value: "evaluate" };
+
 function getter (k) {
   return this._cache[k] === undefined
     ? this[operations[k]]()
-    : self.cache[k];
-
-  var operations = { source: "load", compiled: "compile", value: "evaluate" };
+    : this._cache[k];
 }
 
-function setter (k) {
-  this.cache[k] = v;
+function setter (k, v) {
+  this._cache[k] = v;
 }
 
 Script.prototype.load = function () {
@@ -46,7 +53,7 @@ Script.prototype.load = function () {
 
 Script.prototype.compile = function () {
   return this.source
-    ? this.compiled = runtime.compileSource(this.source, this.name)
+    ? this.compiled = this.runtime.compileSource(this.source, this.name)
     : undefined
 }
 
@@ -56,8 +63,8 @@ Script.prototype.evaluate = function () {
     : (this.source && this.compiled && this.compiled.output && this.compiled.output.code)
       ? (function(){
           var context = this.makeContext()
-            , src     = runtime.wrap(this.compiled.output.code)
-            , result  = vm.runInContext(src, context, { filename: notion.path });
+            , src     = this.runtime.wrap(this.compiled.output.code)
+            , result  = vm.runInContext(src, context, { filename: this.path });
           if (context.error) throw context.error;
           return this._cache.value = result;
         }).bind(this)() : undefined;
@@ -71,11 +78,11 @@ Script.prototype.refresh = function () {
 
 Script.prototype.makeContext = function () {
   var p    = this.path
-    , tree = require('./tree.js').getTree(this)
-    , ctx  = runtime.makeContext(p);
+    , tree = this.parent ? require('./tree.js')(this) : {}
+    , ctx  = this.runtime.makeContext(p);
 
   ctx.process.cwd = function () { return path.dirname(p) };
-  ctx.log = logging.getLogger("@".bold + this.name);
+  //ctx.log = logging.getLogger("@".bold + this.name);
   ctx.self = this;
   ctx._  = tree;
   ctx.__ = tree.__;

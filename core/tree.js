@@ -39,6 +39,11 @@ function setter (node, value) {
   ERR_CANT_SET();
 }
 
+function translate (name) {
+  // TODO: replace hyphen with camelCase
+  return name;
+}
+
 // TODO
 //(defn- setter [i n]
   //(fn [args]
