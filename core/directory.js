@@ -58,3 +58,16 @@ Directory.prototype._watch = function () {
   }.bind(this));
 
 }
+
+Directory.prototype.freeze = function () {
+
+  var frozen =
+    { name:  this.name
+    , time:  String(Date.now()) 
+    , nodes: {} };
+
+  Object.keys(this.notions).map(function (k) {
+    frozen.nodes[k] = this.nodes[k].freeze();
+  })
+
+}
