@@ -70,8 +70,8 @@ Script.prototype.refresh = function () {
 }
 
 Script.prototype.makeContext = function () {
-  var p    = this.path;
-    , tree = require('./tree.js').getTree(this);
+  var p    = this.path
+    , tree = require('./tree.js').getTree(this)
     , ctx  = runtime.makeContext(p);
 
   ctx.process.cwd = function () { return path.dirname(p) };

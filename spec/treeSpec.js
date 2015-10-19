@@ -1,4 +1,4 @@
-var runtime = require('../runtime.js')
+var runtime = require('../runtimes/wisp.js')
   , engine  = require('..')
   , notion  = engine.notion
   , tree    = engine.tree;
