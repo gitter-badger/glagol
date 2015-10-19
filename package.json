@@ -2,7 +2,7 @@
   "name": "etude-engine",
   "version": "0.4.0",
   "description": "",
-  "main": "index.js",
+  "main": "core/index.js",
   "bin": {
     "etude": "./bin/etude"
   },

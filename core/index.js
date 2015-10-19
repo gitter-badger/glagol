@@ -1,14 +1,13 @@
-var runtime = require('./runtime.js')
+var runtime = require('../runtimes/wisp.js')
   , fs      = require('fs')
   , path    = require('path');
 
 module.exports =
-  { runtime: runtime
-  , notion:  runtime.requireWisp('./notion.wisp')
-  , tree:    runtime.requireWisp('./tree.wisp')
-  , util:    runtime.requireWisp('./util.wisp')
-  , export:  export_
-  , start:   start };
+  { runtime:   runtime
+  , Script:    require('./script.js')
+  , Directory: require('./directory.js')
+  , export:    export_
+  , start:     start };
 
 function export_ (_module, dir) {
   var rel  = path.join.bind(null, path.dirname(_module.id))
