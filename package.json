@@ -10,7 +10,7 @@
     "test": "node_modules/jasmine/bin/jasmine.js"
   },
   "author": "",
-  "license": "ISC",
+  "license": "GPL-3.0",
   "dependencies": {
     "chokidar": "^1.0.4",
     "glob": "^5.0.14",
