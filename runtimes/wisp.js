@@ -1,3 +1,6 @@
+/* TODO: this needs to be updated to work with the whole Glagol refactor. */
+
+
 /* **runtime.md** is currently the only **JavaScript** file of the core bunch.
    It contains a few basic functions that allow for bootstrapping into a state
    that is able to execute [Wisp](./wisp.md) code that is itself compiled at

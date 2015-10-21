@@ -18,7 +18,8 @@ var Script = module.exports = function Script (srcPath, srcData) {
     , value:    undefined };
 
   // TODO autodetect this
-  this.runtime = require('../runtimes/wisp.js');
+  this.runtime = require('../runtimes/javascript.js');
+  //this.runtime = require('../runtimes/wisp.js');
 
   // define "smart" properties
   // these comprise the core of the live updating functionality:
@@ -60,10 +61,10 @@ Script.prototype.compile = function () {
 Script.prototype.evaluate = function () {
   return (this._cache.value !== undefined)
     ? this._cache.value
-    : (this.source && this.compiled && this.compiled.output && this.compiled.output.code)
+    : (this.source && this.compiled)
       ? (function(){
           var context = this.makeContext()
-            , src     = this.runtime.wrap(this.compiled.output.code)
+            , src     = this.compiled
             , result  = vm.runInContext(src, context, { filename: this.path });
           if (context.error) throw context.error;
           return this._cache.value = result;
@@ -77,23 +78,19 @@ Script.prototype.refresh = function () {
 }
 
 Script.prototype.makeContext = function () {
-  var p    = this.path
-    , tree = this.parent ? require('./tree.js')(this) : {}
-    , ctx  = this.runtime.makeContext(p);
+  var ctx  = this.runtime.makeContext(this)
+    , tree = this.parent ? require('./tree.js')(this) : {};
 
-  ctx.process.cwd = function () { return path.dirname(p) };
-  //ctx.log = logging.getLogger("@".bold + this.name);
-  ctx.self = this;
   ctx._  = tree;
   ctx.__ = tree.__;
 
-  return ctx;
+  return vm.createContext(ctx);
 }
 
 Script.prototype.freeze = function () {
 
   return { name: this.name
          , time: String(Date.now()) 
-         , code: this.compiled.output.code };
+         , code: this.compiled };
 
 }

@@ -4,7 +4,6 @@ var fs      = require('fs')
 module.exports =
   { Script:    require('./script.js')
   , Directory: require('./directory.js')
-  , runtime:   require('../runtimes/wisp.js')
   , export:    export_
   , start:     start };
 
@@ -33,7 +32,7 @@ function start () {
     arg1 = path.resolve(arg1);
 
     if (!fs.existsSync(arg1)) {
-      console.log("\"" + entryPath + "\"", "doesn't seem to exist.");
+      console.log("\"" + arg1 + "\"", "doesn't seem to exist.");
       process.exit();
     }
 

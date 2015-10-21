@@ -44,10 +44,7 @@ describe('a script', function () {
 
   it('automatically compiles on request', function () {
     var n = core.Script('', '42');
-    expect(n.compiled.output.code).toBe(
-      '42;\n//# sourceMappingURL=data:application/json;base64,' +
-      'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
-      'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiNDIiXX0=\n');
+    expect(n.compiled).toBe('42');
   })
 
   it('automatically evaluates on request', function () {
@@ -59,10 +56,7 @@ describe('a script', function () {
     function () {
       var n = core.Script('', '42');
       n.source = '23';
-      expect(n.compiled.output.code).toBe(
-        '23;\n//# sourceMappingURL=data:application/json;base64,' +
-        'eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIjw/Pz8+Il0sIm5hbWVzIjp' +
-        'bXSwibWFwcGluZ3MiOiJBQUFBIiwic291cmNlc0NvbnRlbnQiOlsiMjMiXX0=\n');
+      expect(n.compiled).toBe('23');
       expect(n.value).toBe(23);
     });
 
