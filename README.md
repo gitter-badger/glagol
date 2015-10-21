@@ -24,9 +24,6 @@ and provides the updated values upon request.
 
 ## Documentation
 
-* [Changelog](https://github.com/egasimus/etude-engine/blob/master/CHANGELOG.md)
-* [Roadmap](https://github.com/egasimus/etude-engine/blob/master/doc/roadmap.md)
-
-
-## License
-* Released under [GNU GPL3](https://github.com/egasimus/etude-engine/blob/master/LICENSE)
+* [Changelog](https://github.com/egasimus/glagol/blob/master/CHANGELOG.md)
+* [Roadmap](https://github.com/egasimus/glagol/blob/master/doc/roadmap.md)
+* [License (GPL3)](https://github.com/egasimus/glagol/blob/master/LICENSE)
