@@ -1,10 +1,10 @@
 {
-  "name": "etude-engine",
-  "version": "0.4.0",
+  "name": "glagol",
+  "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "core/index.js",
   "bin": {
-    "etude": "./bin/etude"
+    "glagol": "./bin/glagol"
   },
   "scripts": {
     "test": "node_modules/jasmine/bin/jasmine.js"
@@ -13,16 +13,8 @@
   "license": "ISC",
   "dependencies": {
     "chokidar": "^1.0.4",
-    "colors": "^1.1.2",
-    "detective": "^4.1.1",
-    "etude-logging": "git://github.com/egasimus/etude-logging",
-    "eventemitter2": "^0.4.14",
     "glob": "^5.0.14",
     "jasmine": "^2.3.2",
-    "keypress": "^0.2.1",
-    "q": "^1.4.1",
-    "resolve": "^1.1.6",
-    "source-map-support": "^0.3.2",
-    "wisp": "git://github.com/egasimus/wisp.git"
+    "source-map-support": "^0.3.2"
   }
 }

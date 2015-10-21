@@ -1,5 +1,14 @@
 # Changelog
 
+**2015-10-21**  Adam Avramov  <fallenblood@gmail.com>
+
+* **version 1.0.0** *glagolify*
+* rename project and core types.
+* rewrite core in vanilla JS.
+* make JS the default runtime language.
+* tidy up documentation.
+* remove various legacy cruft.
+
 **2015-10-04**  Adam Avramov  <fallenblood@gmail.com>
 
 * **version 0.4.0** *nicer launcher*

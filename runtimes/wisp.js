@@ -1,3 +1,6 @@
+/* TODO: this needs to be updated to work with the whole Glagol refactor. */
+
+
 /* **runtime.md** is currently the only **JavaScript** file of the core bunch.
    It contains a few basic functions that allow for bootstrapping into a state
    that is able to execute [Wisp](./wisp.md) code that is itself compiled at
@@ -88,12 +91,12 @@ wisp.expander.installMacro("->", function to () {
    namespaces -- something that neither Wisp nor IIRC Clojure support --
    to the nonsencical `foo.bar/baz`. The following patch makes it produce
    the more consistent result `foo.bar.baz`, which accidentally is perfect
-   for implementing a file tree equivalent for each Notion. 
+   for implementing a file tree equivalent for each Script. 
 
-   This is how in a Notion the identifier `../options/setting` is made to
-   return the value of the notion at the corresponding filesystem path,
-   relative to the calling notion. Note that only the language construct is
-   available runtime-wide; the functionality is not available from non-Notion
+   This is how in a Script the identifier `../options/setting` is made to
+   return the value of the script at the corresponding filesystem path,
+   relative to the calling script. Note that only the language construct is
+   available runtime-wide; the functionality is not available from non-Script
    code (basically any code that comes into being by being `require`d). 
 
    Strangely enough it also seems to be a magic/more magic switch, since to

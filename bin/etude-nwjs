@@ -1,3 +1,0 @@
-#!/usr/bin/env nwjs
-console.log('starting in nwjs');
-require('..').start();

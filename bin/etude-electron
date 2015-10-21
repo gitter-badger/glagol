@@ -1,3 +1,0 @@
-#!/usr/bin/env electron
-console.log('starting in electron');
-require('..').start();
