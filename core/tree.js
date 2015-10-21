@@ -16,9 +16,9 @@ var getTree = module.exports = function getTree (node) {
       Object.defineProperty(tree, translate(name), {
         configurable: true,
         enumerable: true,
-        get: getter.bind(node.nodes[name]),
-        set: setter.bind(node.nodes[name])
-      })
+        get: getter.bind(null, node.nodes[name]),
+        set: setter.bind(null, node.nodes[name])
+      });
     });
     if (node.parent) tree.__ = getTree(node.parent);
     return tree;
@@ -30,7 +30,7 @@ var getTree = module.exports = function getTree (node) {
 function getter (node) {
   return node.type === "Script"
     ? node.value
-    : node.type === "ScriptDirectory"
+    : node.type === "Directory"
       ? getTree(node)
       : ERR_UNKNOWN_TYPE(node);
 }
