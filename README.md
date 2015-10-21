@@ -3,9 +3,8 @@
 Glagol is a Node.js framework. It enables you to build programs that can be
 edited on the fly. It also lets you use preprocessors, such as [Wisp](https://github.com/Gozala/wisp),
 or [CoffeeScript](http://coffeescript.org/), or [Babel](https://babeljs.io/),
-directly, without needing complicated build systems to compile your files in
-advance.
-
+directly, reloading source files on demand, so you don't have to set up a
+complicated build system to compile them in advance.
 
 ## In a nutshell
 
@@ -19,7 +18,8 @@ glagol x/c
 ```
 
 Now go ahead and edit the files `a` and `b`, and watch as the output of `c`
-changes.
+changes. Behind the scenes, Glagol keeps track of changes to the source code,
+and provides the updated values upon request.
 
 
 ## Documentation
