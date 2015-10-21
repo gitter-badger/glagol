@@ -26,7 +26,6 @@ and provides the updated values upon request.
 
 * [Changelog](https://github.com/egasimus/etude-engine/blob/master/CHANGELOG.md)
 * [Roadmap](https://github.com/egasimus/etude-engine/blob/master/doc/roadmap.md)
-* [Example applications in various stages of incompleteness](https://github.com/egasimus/etude-engine/blob/master/doc/examples.md)
 
 
 ## License
