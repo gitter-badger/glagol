@@ -1,37 +1,11 @@
-/* TODO: this needs to be updated to work with the whole Glagol refactor. */
-
-
-/* **runtime.md** is currently the only **JavaScript** file of the core bunch.
-   It contains a few basic functions that allow for bootstrapping into a state
-   that is able to execute [Wisp](./wisp.md) code that is itself compiled at
-   runtime, furthemore without using the ominously yet unexplainedly deprecated
-   [require.extensions](https://nodejs.org/api/all.html#all_require_extensions).
-
-   I am not sure at all what happens with Wisp namespace imports (TODO: check).
-   Everything works just swimmingly over plain Node `require`s; it's a little
-   too cumbersome to type out the `(def ^:private library (require "library"))`
-   but a `(def-` is just one patch away in one subsequent section of this file.
-
-   Let's state it loud and clear what we can offer the world: */
-
 module.exports =
   { compileSource: compileSource
-  , makeContext:   makeContext
-  , requireWisp:   requireWisp
-  , wrap:          wrap };
-
-/* And here's what we don't tell 'em we need for that: */
+  , makeContext:   makeContext };
 
 var fs      = require('fs')
   , path    = require('path')
   , resolve = require('resolve')
   , vm      = require('vm');
-
-/* Including a logger from [etude-logging](github.com/egasimus/etude-logging) */
-var logging = require('etude-logging')
-  , log = logging.getLogger('runtime');
-
-/* And, most notably, most of Wisp: ... */
 
 var wisp = module.exports.wisp =
   { ast:      require('wisp/ast.js')
@@ -110,11 +84,11 @@ wisp.expander.installMacro("->", function to () {
   }
 
 /* And this gets rid of an unnecessary limitation in function declaration order.
-   It changes the way Wisp compiled (fn foo [] :bar) top-level local functions;
+   It changes the way Wisp compiles (fn foo [] :bar) top-level local functions:
    the `var ...` part in `var foo = function foo () { return "bar" }` is not
    really necessary, but when present it prevents local functions from seeing
-   things declared either before or after them; also themselves, which used to
-   make recursion painful.
+   some things declared before and some things declared afterwars, as well as
+   themselves, which makes recursion painful.
 
    A similar patch is likely needed for locals since, in the following code:
    `(let [foo (fn foo [] (foo))])`, `foo` cannot actually call itself.
@@ -140,9 +114,8 @@ wisp.expander.installMacro("->", function to () {
   }
 })();
 
-function compileSource (source, filename, raw) {
-  //log.as("compiling", filename);
-  raw = raw || false;
+function compileSource (source, filename) {
+
   var forms     = wisp.compiler.readForms(source, filename)
     , forms     = forms.forms;
 
@@ -160,65 +133,32 @@ function compileSource (source, filename, raw) {
     throw new Error("Wisp compiler error in " + filename + ": " + processed.error)
   }
 
-  return { forms: forms, processed: processed, output: output }
+  return compiled.output.code;
+
 }
 
-function wrap (code, map) {
-  // TODO make source maps work
-  var sep = "//# sourceMappingURL=data:application/json;base64,";
-  var mapped = code.split(sep);
-  return (!map ? [] : [
-    'require("source-map-support").install({retrieveSourceMap:function(){',
-    'return{url:null,map:"', mapped[1].trim(), '"}}});'
-  ]).concat([
-    'error=null;try{', mapped[0],
-    '}catch(e){error=e}',
-  ]).join("");
-}
-
-function importIntoContext (context, obj) {
-  Object.keys(obj).map(function(k) { context[k] = obj[k] });
-}
-
-function makeContext (filename, elevated) {
+function makeContext (script) {
 
   var isBrowserify = process.browser
     , isElectron   = Boolean(process.versions.electron)
     , isBrowser    = isBrowserify || isElectron;
 
-  var context =
-    { exports:       {}
-    , __dirname:     path.dirname(filename)
-    , __filename:    filename
-    , log:           logging.getLogger(path.basename(filename))
-    , use:           requireWisp
-    , process:       { cwd:    process.cwd
-                     , stdin:  process.stdin
-                     , stdout: process.stdout
-                     , stderr: process.stderr
-                     , exit:   process.exit
-                     , argv:   process.argv }
-    , setTimeout:    setTimeout
-    , clearTimeout:  clearTimeout
-    , setInterval:   setInterval
-    , clearInterval: clearInterval
-    , isInstanceOf:  function (type, obj) { return obj instanceof type }
-    , isSame:        function (a, b) { return a === b }
-    , require:       _require };
+  var context = require('./javascript.js').makeContext(script);
+
+  context.isInstanceOf = function (type, obj) { return obj instanceof type }
+  context.isSame       = function (a, b) { return a === b }
+  context.require      = _require;
 
   [ wisp.ast
   , wisp.sequence
   , wisp.string
   , wisp.runtime ].map(importIntoContext.bind(null, context));
 
-  if (elevated) {
-    context.process = process;
-    context.require = require;
-  }
-
   if (isBrowser) {
     context.document = document;
   }
+
+  return context;
 
   function _require (module) {
     try {
@@ -237,24 +177,8 @@ function makeContext (filename, elevated) {
   };
   _require.main = require.main;
 
-  return vm.createContext(context);
-}
-
-var cache = module.exports.cache = [];
-
-function requireWisp (name, raw, elevated) {
-  var basedir  = path.dirname(require('resolve/lib/caller.js')())
-    , filename = resolve.sync(name, { extensions: [".wisp"], basedir: basedir })
-
-  filename = fs.realpathSync(filename);
-
-  if (!cache[filename]) {
-    var source   = fs.readFileSync(filename, { encoding: 'utf8' })
-      , output   = compileSource(source, filename, raw || false).output
-      , context  = makeContext(filename, elevated);
-    vm.runInContext(wrap(output.code), context, { filename: name });
-    if (context.error) throw context.error;
-    cache[filename] = context.exports;
+  function importIntoContext (context, obj) {
+    Object.keys(obj).map(function(k) { context[k] = obj[k] });
   }
-  return cache[filename];
+
 }

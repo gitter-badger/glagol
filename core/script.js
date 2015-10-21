@@ -17,9 +17,16 @@ var Script = module.exports = function Script (srcPath, srcData) {
     , compiled: undefined
     , value:    undefined };
 
-  // TODO autodetect this
-  this.runtime = require('../runtimes/javascript.js');
-  //this.runtime = require('../runtimes/wisp.js');
+  this.runtime = null;
+
+  switch (path.extname(this.path)) {
+    case '.js':
+      this.runtime = require('../runtimes/javascript.js');
+      break;
+    case '.wisp':
+      this.runtime = require('../runtimes/wisp.js');
+      break;
+  }
 
   // define "smart" properties
   // these comprise the core of the live updating functionality:
@@ -54,7 +61,9 @@ Script.prototype.load = function () {
 
 Script.prototype.compile = function () {
   return this.source
-    ? this.compiled = this.runtime.compileSource(this.source, this.name)
+    ? this.runtime
+      ? this.compiled = this.runtime.compileSource(this.source, this.name)
+      : this.source
     : undefined
 }
 
@@ -62,13 +71,16 @@ Script.prototype.evaluate = function () {
   return (this._cache.value !== undefined)
     ? this._cache.value
     : (this.source && this.compiled)
-      ? (function(){
-          var context = this.makeContext()
-            , src     = this.compiled
-            , result  = vm.runInContext(src, context, { filename: this.path });
-          if (context.error) throw context.error;
-          return this._cache.value = result;
-        }).bind(this)() : undefined;
+      ? this.runtime
+        ? (function(){
+            var context = this.makeContext()
+              , src     = this.compiled
+              , result  = vm.runInContext(src, context, { filename: this.path });
+            if (context.error) throw context.error;
+            return this._cache.value = result;
+          }).bind(this)()
+        : this.compiled
+      : undefined;
 }
 
 Script.prototype.refresh = function () {

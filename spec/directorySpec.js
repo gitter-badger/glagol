@@ -75,7 +75,7 @@ describe('a script directory', function () {
     function check () {
       if (-1 < Object.keys(d.nodes).indexOf(n)) {
         clearInterval(t);
-        expect(d.nodes[n].value).toBe(42);
+        expect(d.nodes[n].value).toBe('42');
         fs.unlinkSync(NEW_FILE);
         done();
       }

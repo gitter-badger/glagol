@@ -48,13 +48,13 @@ describe('a script', function () {
   })
 
   it('automatically evaluates on request', function () {
-    var n = core.Script('', '42');
+    var n = core.Script('foo.js', '42');
     expect(n.value).toBe(42);
   })
 
   it('automatically recompiles and re-evaluates when its source is changed',
     function () {
-      var n = core.Script('', '42');
+      var n = core.Script('foo.js', '42');
       n.source = '23';
       expect(n.compiled).toBe('23');
       expect(n.value).toBe(23);
