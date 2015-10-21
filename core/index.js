@@ -22,9 +22,9 @@ function start () {
 
     var usage =
       [ "usage:"
-      , "  etude <dir>"
-      , "  etude <file>"
-      , "  etude <dir> <file>" ];
+      , "  glagol <dir>"
+      , "  glagol <file>"
+      , "  glagol <dir> <file>" ];
     console.log(usage.join("\n"));
 
   } else {
