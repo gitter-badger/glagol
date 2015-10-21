@@ -1,8 +1,10 @@
 # Glagol 1.0.0
 
 Glagol is a Node.js framework. It enables you to build programs that can be
-edited on the fly. It also lets you use preprocessors such as Wisp or
-CoffeeScript directly, without complicated build systems.
+edited on the fly. It also lets you use preprocessors, such as [Wisp](https://github.com/Gozala/wisp),
+or [CoffeeScript](http://coffeescript.org/), or [Babel](https://babeljs.io/),
+directly, without needing complicated build systems to compile your files in
+advance.
 
 
 ## In a nutshell
