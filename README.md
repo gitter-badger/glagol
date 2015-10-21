@@ -24,7 +24,6 @@ changes.
 
 * [Changelog](https://github.com/egasimus/etude-engine/blob/master/CHANGELOG.md)
 * [Roadmap](https://github.com/egasimus/etude-engine/blob/master/doc/roadmap.md)
-* [Design notes](https://github.com/egasimus/etude-engine/blob/master/doc/design.md)
 * [Example applications in various stages of incompleteness](https://github.com/egasimus/etude-engine/blob/master/doc/examples.md)
 
 
