@@ -1,7 +1,8 @@
 # Roadmap
 
-* Re-enable [Wisp](https://github.com/Gozala/wisp) support ASAP, and
-  write a couple more "runtime" (inaccurate name?) adapters for good measure
+* Fix the whole hackiness around monkeypatching Wisp runtime
+* Write a couple more "runtime" (inaccurate name?) adapters for good measure
+* And finalize the runtime API in the process
 * Add API for specifying custom globals and custom sandboxing methods.
 * Unify `Script` and `Directory` classes -- process dirs as just another file type
 * Replace Jasmine's built-in test runner with a dogfooded one

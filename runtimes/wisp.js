@@ -6,40 +6,38 @@ var fs      = require('fs')
   , path    = require('path')
   , resolve = require('resolve');
 
-/* TODO: Look for a local Wisp installation first. */
+function compileSource (source, opts) {
 
-var wisp = module.exports.wisp =
-  { ast:      require('wisp/ast.js')
-  , compiler: require('wisp/compiler.js')
-  , expander: require('wisp/expander.js')
-  , runtime:  require('wisp/runtime.js')
-  , sequence: require('wisp/sequence.js')
-  , string:   require('wisp/string.js')};
+  // find wisp relative to project directory rather than glagol install path
+  var wisp = patchWisp(findWisp(opts.path));
 
-function compileSource (source, filename) {
-
-  var forms     = wisp.compiler.readForms(source, filename)
-    , forms     = forms.forms;
+  var forms = wisp.compiler.readForms(source, opts.filename).forms;
 
   var processed = wisp.compiler.analyzeForms(forms)
-  if (processed.error) {
-    var msg = "Wisp analyzer error in " + filename + ":\n  " + processed.error;
-    console.log(msg, "\n  ->", processed.error.line, processed.error.column)
-    throw new Error(msg);
-  }
+  if (processed.error) throw ERR_ANALYZER(opts.filename, processed.error)
 
-  var options = { 'source-uri': filename || "<???>" , 'source': source }
-    , output  = wisp.compiler.generate.bind(null, options)
-                  .apply(null, processed.ast);
-  if (output.error) {
-    throw new Error("Wisp compiler error in " + filename + ": " + processed.error)
-  }
+  var options =
+        { 'source-uri': opts.filename || "<???>"
+        , 'source':     source }
+    , output  =
+        wisp.compiler.generate.bind(null, options).apply(null, processed.ast);
+  if (output.error) throw ERR_COMPILER(opts.filename, output.error)
 
-  return compiled.output.code;
+  return output.code;
 
 }
 
-function makeContext (script) {
+function ERR_ANALYZER (filename, error) {
+  return Error("Wisp analyzer error in " + filename + ": " + error);
+}
+
+function ERR_COMPILER (filename, error) {
+  return Error("Wisp compiler error in " + filename + ": " + error);
+}
+
+function makeContext (script, opts) {
+
+  var wisp = patchWisp(findWisp(opts.path));
 
   var isBrowserify = process.browser
     , isElectron   = Boolean(process.versions.electron)
@@ -72,7 +70,7 @@ function makeContext (script) {
       return require(module)
     };
     if (!isBrowserify && path.extname(module) === '.wisp') {
-      return requireWisp(module)
+      return requireWisp(module) /* deprecated, TODO remove */
     } else {
       return require(module)
     }
@@ -85,7 +83,26 @@ function makeContext (script) {
 
 }
 
-function patchWisp () {
+function findWisp (scriptPath) {
+  var scriptDir =
+        path.dirname(scriptPath)
+    , wispDir =
+        path.dirname(resolve.sync('wisp', { basedir: scriptDir }))
+    , requireWisp =
+        function (x) { return require(path.join(wispDir, x)) }
+    , wisp =
+        { _path:    wispDir
+        , ast:      requireWisp('ast.js')
+        , compiler: requireWisp('compiler.js')
+        , expander: requireWisp('expander.js')
+        , runtime:  requireWisp('runtime.js')
+        , sequence: requireWisp('sequence.js')
+        , string:   requireWisp('string.js') };
+
+  return wisp;
+}
+
+function patchWisp (wisp) {
 
   /* First thing we do before being asked to compile any Wisp yet,
      is install a few compiler hacks that I'd like to be available
@@ -95,12 +112,13 @@ function patchWisp () {
      Some of these might constitute suggested future patches to
      the main [Wisp](https://github.com/Gozala/wisp) codebase. (TODO: check) */
 
-  installMacros();
-  patchWriter();
+  installMacros(wisp);
+  patchWriter(wisp);
+  return wisp;
 
 }
 
-function installMacros() {
+function installMacros(wisp) {
 
   /* For example, we enable the arrow macro, which threads
      an argument through nested functions like this:
@@ -120,11 +138,11 @@ function installMacros() {
        ; 4oz
   */
 
-  wisp.expander.installMacro("->", arrowMacro);
+  wisp.expander.installMacro("->", getArrowMacro);
 
 }
 
-function arrowMacro () {
+function getArrowMacro (wisp) {
 
   /* The following implementation of the arrow "native" macro is taken
      directly from [Wisp docs](https://github.com/Gozala/wisp/blob/master/Readme.md#another-macro-example)
@@ -132,15 +150,17 @@ function arrowMacro () {
      which are modeled after Clojure's and implement soft immutability simply --
      by avoiding to modify things in place. */
 
-  var operations = Array.prototype.slice.call(arguments, 0);
-  var s = wisp.sequence;
-  return s.reduce(function (form, op) {
-    return s.cons(s.first(op), s.cons(form, s.rest(op)))
-  }, s.first(operations), s.rest(operations));
+  return function arrowMacro () {
+    var operations = Array.prototype.slice.call(arguments, 0);
+    var s = wisp.sequence;
+    return s.reduce(function (form, op) {
+      return s.cons(s.first(op), s.cons(form, s.rest(op)))
+    }, s.first(operations), s.rest(operations));
+  }
 
 };
 
-function patchWriter () {
+function patchWriter (wisp) {
 
   /* Some writer monkeypatches.
 
@@ -150,14 +170,13 @@ function patchWriter () {
      There's also a typo carried over from upstream: `originam-form` should
      instead be `original-form` in the originam code. */
 
-  var _writer = require('wisp/backend/escodegen/writer.js');
-
-  enableNestedNamespaces();
-  enableVarlessDefs();
+  var _writer = require(path.join(wisp._path, 'backend/escodegen/writer.js'));
+  enableNestedNamespaces(wisp, _writer);
+  enableVarlessDefs(wisp, _writer);
 
 }
 
-function enableNestedNamespaces () {
+function enableNestedNamespaces (wisp, _writer) {
 
   /* By default, Wisp translates `(foo/bar/baz)` (a namespaced function call,
      with the `/` being roughly equivalent to a JS `.`, only with nested
@@ -184,7 +203,7 @@ function enableNestedNamespaces () {
 
 }
 
-function enableVarlessDefs () {
+function enableVarlessDefs (wisp, _writer) {
 
   /* And this gets rid of an unnecessary limitation in function declaration order.
      It changes the way Wisp compiles (fn foo [] :bar) top-level local functions:

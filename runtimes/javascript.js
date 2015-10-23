@@ -4,7 +4,7 @@ module.exports =
 
 var path    = require('path');
 
-function compileSource (source, filename) {
+function compileSource (source, opts) {
   return source;
 }
 

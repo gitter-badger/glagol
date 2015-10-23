@@ -62,7 +62,8 @@ Script.prototype.load = function () {
 Script.prototype.compile = function () {
   return this.source
     ? this.runtime
-      ? this.compiled = this.runtime.compileSource(this.source, this.name)
+      ? this.compiled = this.runtime.compileSource(
+          this.source, { name: this.name, path: this.path })
       : this.source
     : undefined
 }
@@ -90,7 +91,7 @@ Script.prototype.refresh = function () {
 }
 
 Script.prototype.makeContext = function () {
-  var ctx  = this.runtime.makeContext(this)
+  var ctx  = this.runtime.makeContext(this, { path: this.path })
     , tree = this.parent ? require('./tree.js')(this) : {};
 
   ctx._  = tree;
