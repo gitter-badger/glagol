@@ -40,7 +40,12 @@ function setter (node, value) {
 }
 
 function translate (name) {
-  // TODO: replace hyphen with camelCase
+  // strip extension
+  if (-1 < name.indexOf('.')) name = name.substr(0, name.lastIndexOf('.'))
+
+  // replace hyphen with camelCase
+  // TODO
+
   return name;
 }
 
