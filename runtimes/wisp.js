@@ -45,37 +45,19 @@ function makeContext (script, opts) {
 
   var context = require('./javascript.js').makeContext(script);
 
-  context.isInstanceOf = function (type, obj) { return obj instanceof type }
-  context.isSame       = function (a, b) { return a === b }
-  context.require      = _require;
-
   [ wisp.ast
   , wisp.sequence
   , wisp.string
   , wisp.runtime ].map(importIntoContext.bind(null, context));
+
+  context.isInstanceOf = function (type, obj) { return obj instanceof type }
+  context.isSame       = function (a, b) { return a === b }
 
   if (isBrowser) {
     context.document = document;
   }
 
   return context;
-
-  function _require (module) {
-    try {
-      module = resolve.sync(module,
-        { extensions: [".js", ".wisp"]
-        , basedir:    path.dirname(filename) });
-    } catch (e) {
-      // passthru for electron's extra standard libraries
-      return require(module)
-    };
-    if (!isBrowserify && path.extname(module) === '.wisp') {
-      return requireWisp(module) /* deprecated, TODO remove */
-    } else {
-      return require(module)
-    }
-  };
-  _require.main = require.main;
 
   function importIntoContext (context, obj) {
     Object.keys(obj).map(function(k) { context[k] = obj[k] });

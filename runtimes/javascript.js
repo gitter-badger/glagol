@@ -27,7 +27,7 @@ function makeContext (script) {
     , clearTimeout:  clearTimeout
     , setInterval:   setInterval
     , clearInterval: clearInterval
-    , require:       require };
+    , require:       require('require-like')(filename) };
 
   return context;
 
