@@ -26,6 +26,9 @@ var Script = module.exports = function Script (srcPath, srcData) {
     case '.wisp':
       this.runtime = require('../runtimes/wisp.js');
       break;
+    case '.esl':
+      this.runtime = require('../runtimes/eslisp.js');
+      break;
   }
 
   // define "smart" properties
