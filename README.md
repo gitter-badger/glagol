@@ -11,10 +11,10 @@ complicated build system to compile them in advance.
 ```
 sudo npm install -g glagol
 mkdir x
-echo '"edit me"' > x/a
-echo '1000' > x/b
-echo '(function r () { console.log(_["a"], _["b"]); setTimeout(r, _["b"]) })()' > x/c
-glagol x/c
+echo 'I am plain text, edit me!' > x/a
+echo '100 * 10 // Evaluated as JavaScript' > x/b.js
+echo '(function r () { console.log(_["a"], _["b"]); setTimeout(r, _["b"]) })()' > x/c.js
+glagol x/c.js
 ```
 
 Now go ahead and edit the files `a` and `b`, and watch as the output of `c`
